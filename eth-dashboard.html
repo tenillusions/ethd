@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ETH Dashboard — Ethereum Overview</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Instrument+Serif:ital@0;1&display=swap');
+  :root {
+    --bg:#0a0b0d;--surface:#111318;--surface-2:#181b22;--border:#1e2230;
+    --text:#e8e6e3;--text-dim:#7a7d85;--text-muted:#4a4d55;
+    --accent:#627eea;--accent-dim:rgba(98,126,234,.12);
+    --green:#00d4aa;--green-dim:rgba(0,212,170,.1);
+    --red:#ff6b6b;--red-dim:rgba(255,107,107,.1);
+    --orange:#ffa94d;--orange-dim:rgba(255,169,77,.1);
+    --yellow:#ffd43b;--yellow-dim:rgba(255,212,59,.1);
+    --purple:#b197fc;--cyan:#66d9e8;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{font-size:15px}
+  body{font-family:'DM Mono',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;line-height:1.6;overflow-x:hidden}
+  ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+  .header{padding:2rem 3rem 1.5rem;border-bottom:1px solid var(--border);display:flex;align-items:flex-end;justify-content:space-between;position:sticky;top:0;background:var(--bg);z-index:100;backdrop-filter:blur(20px)}
+  .header-left h1{font-family:'Instrument Serif',serif;font-size:2.2rem;font-weight:400;letter-spacing:-.02em}
+  .header-left h1 span{color:var(--accent);font-style:italic}
+  .header-left p{color:var(--text-dim);font-size:.82rem;margin-top:.2rem;font-weight:300}
+  .header-right{display:flex;align-items:center;gap:1.5rem}
+  .live-dot{width:6px;height:6px;background:var(--green);border-radius:50%;animation:pulse 2s ease-in-out infinite;display:inline-block}
+  @keyframes pulse{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(0,212,170,.4)}50%{opacity:.6;box-shadow:0 0 0 6px rgba(0,212,170,0)}}
+  .header-time{font-family:'DM Mono',monospace;font-size:.78rem;color:var(--text-dim);letter-spacing:.05em}
+  .dashboard{max-width:1600px;margin:0 auto;padding:1.5rem 3rem 4rem;display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:2px;padding:1.5rem;position:relative;overflow:hidden}
+  .card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--border),transparent)}
+  .card-label{font-size:.68rem;text-transform:uppercase;letter-spacing:.15em;color:var(--text-muted);margin-bottom:1rem;font-weight:500;display:flex;align-items:center;gap:.5rem}
+  .card-label .dot{width:4px;height:4px;border-radius:50%;background:var(--accent)}
+  .price-card{grid-column:span 2;padding:2rem 2.5rem}
+  .price-main{display:flex;align-items:baseline;gap:1.2rem;margin-bottom:.5rem}
+  .price-value{font-family:'DM Mono',monospace;font-size:3.6rem;font-weight:500;letter-spacing:-.03em;line-height:1}
+  .price-change{font-family:'DM Mono',monospace;font-size:1rem;padding:.25rem .6rem;border-radius:2px;font-weight:500}
+  .price-change.up{background:var(--green-dim);color:var(--green)}.price-change.down{background:var(--red-dim);color:var(--red)}
+  .price-meta{display:flex;gap:2.5rem;margin-top:1rem;padding-top:1rem;border-top:1px solid var(--border)}
+  .price-meta-item{display:flex;flex-direction:column;gap:.15rem}
+  .price-meta-label{font-size:.65rem;text-transform:uppercase;letter-spacing:.12em;color:var(--text-muted)}
+  .price-meta-value{font-family:'DM Mono',monospace;font-size:.88rem;color:var(--text-dim)}
+  .staking-card{grid-column:span 2}
+  .queue-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1.5rem;margin-bottom:1.2rem}
+  .queue-item{padding:1rem;background:var(--surface-2);border:1px solid var(--border);border-radius:2px}
+  .queue-item-label{font-size:.65rem;text-transform:uppercase;letter-spacing:.12em;color:var(--text-muted);margin-bottom:.5rem}
+  .queue-item-value{font-family:'DM Mono',monospace;font-size:1.6rem;font-weight:500;letter-spacing:-.02em}
+  .queue-item-value.green{color:var(--green)}.queue-item-value.red{color:var(--red)}.queue-item-value.accent{color:var(--accent)}
+  .queue-item-sub{font-size:.72rem;color:var(--text-dim);margin-top:.3rem}
+  .bar-chart{display:flex;align-items:flex-end;gap:3px;height:80px;padding-top:.5rem}
+  .bar-chart .bar{flex:1;border-radius:1px 1px 0 0;min-width:4px;transition:height .6s cubic-bezier(.16,1,.3,1)}
+  .bar-chart .bar.in{background:var(--green);opacity:.7}.bar-chart .bar.out{background:var(--red);opacity:.7}
+  .chart-legend{display:flex;gap:1.5rem;margin-top:.8rem}
+  .chart-legend-item{display:flex;align-items:center;gap:.4rem;font-size:.68rem;color:var(--text-dim)}
+  .chart-legend-item .swatch{width:8px;height:8px;border-radius:1px}
+  .tech-grid{display:grid;grid-template-columns:1fr 1fr;gap:.6rem}
+  .tech-item{padding:.65rem .8rem;background:var(--surface-2);border:1px solid var(--border);border-radius:2px;display:flex;justify-content:space-between;align-items:center}
+  .tech-item-name{font-size:.72rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:.08em}
+  .tech-item-value{font-family:'DM Mono',monospace;font-size:.85rem;font-weight:500}
+  .tech-item-signal{font-size:.58rem;text-transform:uppercase;letter-spacing:.1em;padding:.12rem .35rem;border-radius:2px;margin-left:.4rem}
+  .tech-item-signal.buy{background:var(--green-dim);color:var(--green)}.tech-item-signal.sell{background:var(--red-dim);color:var(--red)}.tech-item-signal.neutral{background:var(--orange-dim);color:var(--orange)}
+  .onchain-list{display:grid;grid-template-columns:1fr 1fr;gap:.5rem}
+  .onchain-item{display:flex;justify-content:space-between;align-items:center;padding:.55rem .7rem;background:var(--surface-2);border:1px solid var(--border);border-radius:2px}
+  .onchain-item-left{display:flex;flex-direction:column;gap:.1rem}
+  .onchain-item-name{font-size:.72rem;color:var(--text-dim)}
+  .onchain-item-desc{font-size:.6rem;color:var(--text-muted)}
+  .onchain-item-value{font-family:'DM Mono',monospace;font-size:.88rem;font-weight:500;text-align:right}
+  .onchain-item-change{font-size:.62rem;margin-top:.1rem;text-align:right}
+  .onchain-item-change.up{color:var(--green)}.onchain-item-change.down{color:var(--red)}
+  .signal-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.8rem}
+  .signal-item{text-align:center;padding:.8rem .5rem;background:var(--surface-2);border:1px solid var(--border);border-radius:2px}
+  .signal-item-label{font-size:.6rem;text-transform:uppercase;letter-spacing:.1em;color:var(--text-muted);margin-bottom:.4rem}
+  .signal-item-value{font-family:'DM Mono',monospace;font-size:1.1rem;font-weight:500}
+  .signal-item-sub{font-size:.58rem;color:var(--text-dim);margin-top:.2rem}
+  .levels-track{position:relative;height:200px;display:flex;flex-direction:column;justify-content:space-between;padding:0 .5rem}
+  .level-row{display:flex;align-items:center;gap:.8rem}
+  .level-line{flex:1;height:1px;border-top:1px dashed var(--border)}
+  .level-label{font-family:'DM Mono',monospace;font-size:.72rem;min-width:60px;text-align:right}
+  .level-tag{font-size:.58rem;text-transform:uppercase;letter-spacing:.1em;padding:.1rem .4rem;border-radius:2px;min-width:52px;text-align:center}
+  .level-tag.resist{background:var(--red-dim);color:var(--red)}.level-tag.support{background:var(--green-dim);color:var(--green)}.level-tag.current{background:var(--accent-dim);color:var(--accent)}
+  .footer{grid-column:span 3;text-align:center;padding:2rem 0 1rem;font-size:.65rem;color:var(--text-muted);letter-spacing:.08em;border-top:1px solid var(--border)}
+  .loading{color:var(--text-muted);font-size:.75rem;padding:2rem;text-align:center}
+  .status-badge{font-size:.55rem;padding:.15rem .4rem;border-radius:2px;letter-spacing:.06em;font-weight:500}
+  .status-badge.live{background:var(--green-dim);color:var(--green)}
+  .status-badge.stale{background:var(--orange-dim);color:var(--orange)}
+  .status-badge.offline{background:var(--red-dim);color:var(--red)}
+  .data-source{font-size:.55rem;color:var(--text-muted);margin-left:.5rem}
+  .update-flash{animation:flash .3s ease}
+  @keyframes flash{0%{background:var(--accent-dim)}100%{background:var(--surface)}}
+  .card{opacity:0;transform:translateY(12px);animation:fadeUp .5s cubic-bezier(.16,1,.3,1) forwards}
+  .card:nth-child(1){animation-delay:.05s}.card:nth-child(2){animation-delay:.1s}.card:nth-child(3){animation-delay:.15s}.card:nth-child(4){animation-delay:.2s}.card:nth-child(5){animation-delay:.25s}.card:nth-child(6){animation-delay:.3s}.card:nth-child(7){animation-delay:.35s}.card:nth-child(8){animation-delay:.4s}
+  @keyframes fadeUp{to{opacity:1;transform:translateY(0)}}
+  @media(max-width:1200px){.dashboard{grid-template-columns:1fr 1fr;padding:1rem 1.5rem 3rem}.price-card,.staking-card{grid-column:span 2}.footer{grid-column:span 2}.header{padding:1.5rem}}
+  @media(max-width:768px){.dashboard{grid-template-columns:1fr}.price-card,.staking-card,.footer{grid-column:span 1}[style*="grid-column:span 2"]{grid-column:span 1!important}.queue-grid{grid-template-columns:1fr}.tech-grid{grid-template-columns:1fr}.signal-grid{grid-template-columns:1fr 1fr}.onchain-list{grid-template-columns:1fr}.header{flex-direction:column;align-items:flex-start;gap:.8rem}.price-value{font-size:2.4rem}.price-meta{flex-wrap:wrap;gap:1.2rem}}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <h1><span>ETH</span> Dashboard</h1>
+    <p>Ethereum overview — Price · Staking · Technicals · Sentiment · Signals</p>
+  </div>
+  <div class="header-right">
+    <span style="display:flex;align-items:center;gap:.4rem;font-size:.72rem;color:var(--text-dim)"><span class="live-dot"></span>LIVE</span>
+    <span class="header-time" id="clock"></span>
+  </div>
+</div>
+
+<div class="dashboard">
+
+  <!-- PRICE -->
+  <div class="card price-card" id="priceCard">
+    <div class="card-label"><span class="dot"></span>Live Price <span class="status-badge live" id="priceStatus">LIVE</span> <span class="data-source">CryptoCompare</span></div>
+    <div class="price-main">
+      <span class="price-value" id="priceValue">--</span>
+      <span class="price-change up" id="priceChange">--</span>
+    </div>
+    <div style="margin-top:1rem;padding-top:1rem;border-top:1px solid var(--border)">
+      <div style="display:flex;justify-content:space-between;font-size:.6rem;color:var(--text-muted);margin-bottom:.4rem">
+        <span>24h Low</span><span>24h High</span>
+      </div>
+      <div style="position:relative;height:8px;background:linear-gradient(90deg,var(--red),var(--orange),var(--yellow),var(--green));border-radius:4px">
+        <div id="rangeBarMarker" style="position:absolute;top:-3px;width:14px;height:14px;background:var(--text);border:2px solid var(--bg);border-radius:50%;transform:translateX(-50%);transition:left .8s cubic-bezier(.16,1,.3,1);box-shadow:0 0 6px rgba(0,0,0,.5)"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-top:.3rem;font-family:'DM Mono',monospace;font-size:.72rem;color:var(--text-dim)">
+        <span id="rangeLow">--</span><span id="rangeHigh">--</span>
+      </div>
+    </div>
+    <div class="price-meta">
+    </div>
+  </div>
+
+  <!-- FEAR & GREED + KEY LEVELS (merged card) -->
+  <div class="card" style="grid-column:span 2">
+    <div style="display:flex;gap:1.5rem">
+      <!-- Left: Fear & Greed -->
+      <div style="flex:1;display:flex;flex-direction:column">
+        <div class="card-label"><span class="dot" style="background:var(--yellow)"></span>Fear &amp; Greed Index <span class="status-badge live" id="fgStatus">LIVE</span></div>
+        <div style="display:flex;align-items:center;gap:1rem;padding:.3rem 0">
+          <div style="position:relative;width:80px;height:80px;flex-shrink:0">
+            <svg width="80" height="80" viewBox="0 0 100 100">
+              <circle cx="50" cy="50" r="42" fill="none" stroke="var(--surface-2)" stroke-width="6"/>
+              <circle cx="50" cy="50" r="42" fill="none" stroke="url(#fgGrad)" stroke-width="6"
+                stroke-dasharray="264" stroke-dashoffset="264" stroke-linecap="round"
+                transform="rotate(-90 50 50)" id="fgArc" style="transition:stroke-dashoffset 1s cubic-bezier(.16,1,.3,1)"/>
+              <defs><linearGradient id="fgGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stop-color="var(--red)"/><stop offset="25%" stop-color="var(--orange)"/>
+                <stop offset="50%" stop-color="var(--yellow)"/><stop offset="100%" stop-color="var(--green)"/>
+              </linearGradient></defs>
+            </svg>
+            <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center">
+              <span style="font-family:'DM Mono',monospace;font-size:1.5rem;font-weight:500" id="fgValue">--</span>
+              <span style="font-size:.55rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:.1em" id="fgLabel">--</span>
+            </div>
+          </div>
+          <div style="flex:1;display:flex;flex-direction:column;gap:.3rem" id="fgBars"></div>
+        </div>
+      </div>
+      <!-- Divider -->
+      <div style="width:1px;background:var(--border);flex-shrink:0"></div>
+      <!-- Right: Key Levels -->
+      <div style="flex:1;display:flex;flex-direction:column">
+        <div class="card-label"><span class="dot" style="background:var(--red)"></span>Key Price Levels</div>
+        <div style="flex:1;display:flex;align-items:center">
+          <div class="levels-track" id="levelsTrack" style="width:100%;height:auto"><div class="loading">Computing...</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STAKING -->
+  <div class="card staking-card">
+    <div class="card-label"><span class="dot" style="background:var(--green)"></span>ETH Staking Queue <span class="status-badge" id="stakingStatus">Loading</span> <span class="data-source" id="queueSource">validatorqueue.com</span></div>
+    <div class="queue-grid">
+      <div class="queue-item"><div class="queue-item-label">Entry Queue</div><div class="queue-item-value green" id="queueEntry">--</div><div class="queue-item-sub" id="queueEntrySub">--</div></div>
+      <div class="queue-item"><div class="queue-item-label">Exit Queue</div><div class="queue-item-value red" id="queueExit">--</div><div class="queue-item-sub" id="queueExitSub">--</div></div>
+      <div class="queue-item"><div class="queue-item-label">Active Validators</div><div class="queue-item-value accent" id="validators">--</div><div class="queue-item-sub" id="validatorsSub">--</div></div>
+    </div>
+    <!-- Pressure bars -->
+    <div style="display:flex;gap:1.5rem;margin-top:.5rem">
+      <div style="flex:1;display:flex;flex-direction:column;gap:.3rem">
+        <div style="display:flex;justify-content:space-between;font-size:.62rem;color:var(--text-muted)">
+          <span>Entry Pressure</span><span id="entryPressureLabel">--</span>
+        </div>
+        <div style="height:6px;background:var(--surface-2);border-radius:3px;overflow:hidden">
+          <div id="entryPressureBar" style="width:0%;height:100%;background:var(--green);border-radius:3px;transition:width .8s cubic-bezier(.16,1,.3,1)"></div>
+        </div>
+      </div>
+      <div style="flex:1;display:flex;flex-direction:column;gap:.3rem">
+        <div style="display:flex;justify-content:space-between;font-size:.62rem;color:var(--text-muted)">
+          <span>Exit Pressure</span><span id="exitPressureLabel">--</span>
+        </div>
+        <div style="height:6px;background:var(--surface-2);border-radius:3px;overflow:hidden">
+          <div id="exitPressureBar" style="width:0%;height:100%;background:var(--red);border-radius:3px;transition:width .8s cubic-bezier(.16,1,.3,1)"></div>
+        </div>
+      </div>
+    </div>
+    <div style="margin-top:.6rem;text-align:center;font-size:.65rem;color:var(--text-dim)">Entry / Exit = <span style="color:var(--green);font-family:'DM Mono',monospace" id="queueRatio">--</span></div>
+    <div style="margin-top:.8rem"><span style="font-size:.68rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.1em">Entry/Exit Trend (30 days)</span></div>
+    <div class="bar-chart" id="queueChart" style="margin-top:.4rem"><div class="loading">Loading...</div></div>
+    <div class="chart-legend" style="margin-top:.4rem">
+      <div class="chart-legend-item"><span class="swatch" style="background:var(--green);opacity:.7"></span>Entry</div>
+      <div class="chart-legend-item"><span class="swatch" style="background:var(--red);opacity:.7"></span>Exit</div>
+    </div>
+  </div>
+
+  <!-- VERDICT + SIGNALS -->
+  <div class="card" style="grid-column:span 2">
+    <div class="card-label"><span class="dot" style="background:var(--orange)"></span>Verdict & Signals <span class="data-source">Technicals Composite</span></div>
+    <div style="display:flex;gap:2rem;align-items:center;margin-bottom:1.2rem">
+      <div style="text-align:center;min-width:120px">
+        <div id="verdictSignal" style="font-size:.65rem;color:var(--text-muted)">● Computing...</div>
+        <div id="verdictText" style="font-family:'Instrument Serif',serif;font-size:1.6rem;margin-bottom:.3rem;font-style:italic">--</div>
+      </div>
+      <div style="flex:1;font-size:.78rem;color:var(--text-dim);line-height:1.6" id="verdictSub">Auto-computed once historical data loads</div>
+    </div>
+    <div style="border-top:1px solid var(--border);padding-top:1rem">
+      <div class="signal-grid" id="signalGrid"><div class="loading">Computing...</div></div>
+    </div>
+  </div>
+
+  <!-- TECHNICAL INDICATORS -->
+  <div class="card" style="grid-column:span 2">
+    <div class="card-label"><span class="dot" style="background:var(--purple)"></span>Technical Indicators <span class="data-source">CryptoCompare 200d data</span></div>
+    <div class="tech-grid" id="techGrid"><div class="loading">Computing...</div></div>
+  </div>
+
+  <!-- ON-CHAIN -->
+  <div class="card" style="grid-column:span 2">
+    <div class="card-label"><span class="dot" style="background:var(--cyan)"></span>On-chain Data <span class="status-badge live" id="onchainStatus">LIVE</span> <span class="data-source">Blockchair · ultrasound.money · DefiLlama · Lido</span></div>
+    <div class="onchain-list" id="onchainList"><div class="loading">Loading...</div></div>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="footer">
+    Data sources: CryptoCompare · Blockchair · DefiLlama · Lido · Ultrasound.money · Alternative.me · For reference only, not financial advice ·
+    <span id="footerTime"></span>
+  </div>
+
+</div>
+
+<script>
+// ── Utility ──
+const fmt = (n, d=2) => Number(n).toLocaleString('en-US', {minimumFractionDigits:d, maximumFractionDigits:d});
+const fmtInt = n => Number(n).toLocaleString('en-US', {maximumFractionDigits:0});
+const fmtB = n => (n/1e9).toFixed(2) + 'B';
+const fmtM = n => (n/1e6).toFixed(1) + 'M';
+const weiToEth = wei => parseFloat(wei) / 1e18;
+
+// ── Clock ──
+function updateClock() {
+  const now = new Date();
+  const pad = n => String(n).padStart(2, '0');
+  document.getElementById('clock').textContent = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+  document.getElementById('footerTime').textContent = `Last updated ${now.toLocaleString('en-US')}`;
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// ── Shared state ──
+const state = {
+  currentPrice: 0,
+  blockchairData: null,
+  queueData: null,
+  queueHist: [],
+  histData: [],
+  indicators: null,
+};
+
+function setStatus(id, status) {
+  const el = document.getElementById(id);
+  el.className = 'status-badge ' + status;
+  el.textContent = status.toUpperCase();
+}
+
+// ── Price (CryptoCompare) ──
+async function fetchPrice() {
+  try {
+    const res = await fetch('https://min-api.cryptocompare.com/data/pricemultifull?fsyms=ETH&tsyms=USD');
+    const raw = (await res.json()).RAW.ETH.USD;
+    state.currentPrice = raw.PRICE;
+    document.getElementById('priceValue').textContent = '$' + fmt(state.currentPrice);
+    const el = document.getElementById('priceChange');
+    el.textContent = (raw.CHANGEPCT24HOUR >= 0 ? '+' : '') + raw.CHANGEPCT24HOUR.toFixed(2) + '%';
+    el.className = 'price-change ' + (raw.CHANGEPCT24HOUR >= 0 ? 'up' : 'down');
+    const low = raw.LOW24HOUR, high = raw.HIGH24HOUR;
+    const pct = high > low ? ((state.currentPrice - low) / (high - low) * 100) : 50;
+    document.getElementById('rangeBarMarker').style.left = Math.max(2, Math.min(98, pct)) + '%';
+    document.getElementById('rangeLow').textContent = '$' + fmt(low);
+    document.getElementById('rangeHigh').textContent = '$' + fmt(high);
+    document.getElementById('priceCard').classList.add('update-flash');
+    setTimeout(() => document.getElementById('priceCard').classList.remove('update-flash'), 300);
+    document.getElementById('priceStatus').className = 'status-badge live';
+    document.getElementById('priceStatus').textContent = 'LIVE';
+  } catch(e) {
+    console.error('Price error:', e);
+    document.getElementById('priceStatus').className = 'status-badge offline';
+    document.getElementById('priceStatus').textContent = 'OFFLINE';
+  }
+}
+fetchPrice();
+setInterval(fetchPrice, 30000);
+
+// ── Fear & Greed (Alternative.me) ──
+async function fetchFearGreed() {
+  try {
+    const data = await (await fetch('https://api.alternative.me/fng/?limit=7')).json();
+    const v = parseInt(data.data[0].value);
+    const cls = data.data[0].value_classification;
+    document.getElementById('fgValue').textContent = v;
+    document.getElementById('fgLabel').textContent = cls;
+    document.getElementById('fgValue').style.color = v <= 25 ? 'var(--red)' : v <= 45 ? 'var(--orange)' : v <= 55 ? 'var(--yellow)' : 'var(--green)';
+    document.getElementById('fgArc').style.strokeDashoffset = 264 - (264 * v / 100);
+    const bars = document.getElementById('fgBars');
+    bars.innerHTML = '';
+    data.data.forEach((d, i) => {
+      const val = parseInt(d.value);
+      const dt = new Date(d.timestamp * 1000);
+      const color = val <= 25 ? 'var(--red)' : val <= 45 ? 'var(--orange)' : val <= 55 ? 'var(--yellow)' : 'var(--green)';
+      const label = i === 0 ? 'Today' : `${dt.getMonth()+1}/${dt.getDate()}`;
+      bars.innerHTML += `<div style="display:flex;align-items:center;gap:.5rem">
+        <span style="font-size:.58rem;color:var(--text-muted);min-width:28px;text-align:right">${label}</span>
+        <div style="flex:1;height:4px;background:var(--surface-2);border-radius:2px;overflow:hidden">
+          <div style="width:${val}%;height:100%;background:${color};border-radius:2px;transition:width .8s cubic-bezier(.16,1,.3,1)"></div>
+        </div>
+        <span style="font-family:'DM Mono',monospace;font-size:.65rem;color:${color};min-width:20px;text-align:right">${val}</span>
+      </div>`;
+    });
+    document.getElementById('fgStatus').className = 'status-badge live';
+    document.getElementById('fgStatus').textContent = 'LIVE';
+  } catch(e) {
+    console.error('FnG error:', e);
+    document.getElementById('fgStatus').className = 'status-badge offline';
+    document.getElementById('fgStatus').textContent = 'OFFLINE';
+  }
+}
+fetchFearGreed();
+setInterval(fetchFearGreed, 300000);
+
+// ── Blockchair (supply, burned) ──
+async function fetchBlockchair() {
+  try {
+    const res = await fetch('https://api.blockchair.com/ethereum/stats');
+    const data = (await res.json()).data;
+    state.blockchairData = data;
+    return data;
+  } catch(e) {
+    console.error('Blockchair error:', e);
+    return null;
+  }
+}
+
+// ── Staking Queue (validatorqueue.com direct) ──
+let queueData = null;
+let queueHist = [];
+
+function parseQueueFromHTML(html) {
+  const histMatch = html.match(/const\s+historical_data\s*=\s*(\[[\s\S]*?\])\s*[;\n]/);
+  let hist = [];
+  if (histMatch) { try { hist = JSON.parse(histMatch[1]); } catch(e) {} }
+
+  const entryETH = html.match(/Entry Queue[\s\S]*?ETH:\s*([\d,]+)/i);
+  const entryWait = html.match(/Entry Queue[\s\S]*?Wait:\s*([\d]+ days?,?\s*[\d]+ hours?)/i);
+  const entryChurn = html.match(/Entry Queue[\s\S]*?Churn:\s*([\d\/epoch]+)/i);
+  const exitETH = html.match(/Exit Queue[\s\S]*?ETH:\s*([\d,]+)/i);
+  const exitWait = html.match(/Exit Queue[\s\S]*?Wait:\s*([\d]+ days?,?\s*[\d]+ hours?)/i);
+  const exitChurn = html.match(/Exit Queue[\s\S]*?Churn:\s*([\d\/epoch]+)/i);
+  const sweepDelay = html.match(/Sweep Delay[\s\S]*?([\d.]+ days?)/i);
+  const activeValidators = html.match(/Active Validators:\s*([\d,]+)/i);
+  const stakedETH = html.match(/Staked ETH:\s*([\d.]+[MBK]?)\s*\(([\d.]+%)\)/i);
+  const apr = html.match(/APR:\s*([\d.]+%)/i);
+
+  return {
+    entry: entryETH?.[1] || null,
+    entryWait: entryWait?.[1] || null,
+    entryChurn: entryChurn?.[1] || null,
+    exit: exitETH?.[1] || null,
+    exitWait: exitWait?.[1] || null,
+    exitChurn: exitChurn?.[1] || null,
+    sweep: sweepDelay?.[1] || null,
+    validators: activeValidators?.[1] || null,
+    staked: stakedETH?.[1] || null,
+    stakedPct: stakedETH?.[2] || null,
+    apr: apr?.[1] || null,
+    historical: hist
+  };
+}
+
+async function fetchQueue() {
+  const statusEl = document.getElementById('stakingStatus');
+  const sourceEl = document.getElementById('queueSource');
+  try {
+    statusEl.textContent = 'REFRESHING';
+    statusEl.className = 'status-badge stale';
+    const res = await fetch('https://www.validatorqueue.com', { signal: AbortSignal.timeout(10000) });
+    const html = await res.text();
+    if (!html || html.length < 500) throw new Error('Empty response');
+    const parsed = parseQueueFromHTML(html);
+    if (!parsed.entry) throw new Error('Parse failed');
+    queueData = parsed;
+    if (parsed.historical?.length > 0) queueHist = parsed.historical;
+    renderQueue();
+    renderQueueChart();
+    statusEl.textContent = 'LIVE';
+    statusEl.className = 'status-badge live';
+    sourceEl.textContent = 'validatorqueue.com';
+  } catch(e) {
+    console.error('Queue fetch error:', e);
+    statusEl.textContent = 'OFFLINE';
+    statusEl.className = 'status-badge offline';
+    sourceEl.textContent = 'validatorqueue.com unreachable';
+    document.getElementById('queueEntry').textContent = '--';
+    document.getElementById('queueEntrySub').textContent = 'Network unreachable';
+    document.getElementById('queueExit').textContent = '--';
+    document.getElementById('queueExitSub').textContent = 'Network unreachable';
+    document.getElementById('validators').textContent = '--';
+    document.getElementById('validatorsSub').textContent = 'Check network connection';
+    document.getElementById('queueChart').innerHTML = '<div style="text-align:center;color:var(--text-muted);font-size:.72rem;padding:1rem">Cannot fetch data — ensure validatorqueue.com is accessible</div>';
+  }
+}
+
+function renderQueue() {
+  if (!queueData) return;
+  const d = queueData;
+  document.getElementById('queueEntry').textContent = (d.entry || '--') + ' ETH';
+  document.getElementById('queueEntrySub').textContent = d.entryWait ? 'Est. wait ≈ ' + d.entryWait + (d.entryChurn ? ' · Churn ' + d.entryChurn : '') : '--';
+  document.getElementById('queueExit').textContent = (d.exit || '--') + ' ETH';
+  document.getElementById('queueExitSub').textContent = d.exitWait ? 'Est. wait ≈ ' + d.exitWait + (d.sweep ? ' · Sweep ' + d.sweep : '') : '--';
+  document.getElementById('validators').textContent = d.validators || '--';
+  document.getElementById('validatorsSub').textContent = d.staked ? 'Staked ' + d.staked + ' (' + d.stakedPct + ')' + (d.apr ? ' · APR ' + d.apr : '') : '--';
+  const entryNum = parseInt((d.entry || '0').replace(/,/g, ''));
+  const exitNum = parseInt((d.exit || '0').replace(/,/g, ''));
+  const total = entryNum + exitNum;
+  if (total > 0) {
+    document.getElementById('entryPressureBar').style.width = (entryNum / total * 100).toFixed(0) + '%';
+    document.getElementById('exitPressureBar').style.width = (exitNum / total * 100).toFixed(0) + '%';
+    document.getElementById('entryPressureLabel').textContent = (d.entry || '--') + ' ETH';
+    document.getElementById('exitPressureLabel').textContent = (d.exit || '--') + ' ETH';
+    const ratioEl = document.getElementById('queueRatio');
+    ratioEl.textContent = (entryNum / exitNum).toFixed(1) + 'x';
+    ratioEl.style.color = entryNum / exitNum > 3 ? 'var(--green)' : entryNum / exitNum > 1 ? 'var(--yellow)' : 'var(--red)';
+  }
+}
+
+function renderQueueChart() {
+  if (!queueHist.length) return;
+  const chart = document.getElementById('queueChart');
+  chart.innerHTML = '';
+  const data = queueHist.slice(-30);
+  const maxVal = Math.max(...data.flatMap(d => [d.entry_queue || d.eq || 0, d.exit_queue || d.xq || 0]));
+  data.forEach(d => {
+    const eq = d.entry_queue || d.eq || 0;
+    const xq = d.exit_queue || d.xq || 0;
+    const ib = document.createElement('div'); ib.className = 'bar in'; ib.style.height = maxVal > 0 ? (eq/maxVal*100)+'%' : '0%'; ib.title = (d.date||d.d)+' Entry: '+fmtInt(eq); chart.appendChild(ib);
+    const ob = document.createElement('div'); ob.className = 'bar out'; ob.style.height = maxVal > 0 ? (xq/maxVal*100)+'%' : '0%'; ob.title = (d.date||d.d)+' Exit: '+fmtInt(xq); chart.appendChild(ob);
+  });
+}
+
+// ── On-chain (multiple real APIs) ──
+async function fetchOnchain() {
+  const items = [];
+  const statusEl = document.getElementById('onchainStatus');
+
+  try {
+    // 1. Gas from ultrasound.money
+    try {
+      const gasRes = await fetch('https://ultrasound.money/api/v2/fees/base-fee-per-gas-stats');
+      const gasData = await gasRes.json();
+      const currentGwei = gasData.d1 ? (gasData.d1.average / 1e9).toFixed(1) : null;
+      const d30Gwei = gasData.d30 ? (gasData.d30.average / 1e9).toFixed(1) : null;
+      items.push({
+        name: 'Gas Fee',
+        desc: 'ultrasound.money',
+        value: currentGwei ? currentGwei + ' Gwei' : '--',
+        change: d30Gwei ? '30d avg ' + d30Gwei + ' Gwei' : '',
+        dir: currentGwei && d30Gwei && parseFloat(currentGwei) < parseFloat(d30Gwei) ? 'up' : 'down',
+      });
+    } catch(e) { items.push({name:'Gas Fee', desc:'ultrasound.money', value:'--', change:'Fetch failed', dir:'down'}); }
+
+    // 2. Lido APR
+    try {
+      const aprRes = await fetch('https://eth-api.lido.fi/v1/protocol/steth/apr/sma');
+      const aprData = (await aprRes.json()).data;
+      items.push({
+        name: 'Staking APR',
+        desc: 'Lido · 7d SMA',
+        value: aprData.smaApr.toFixed(2) + '%',
+        change: 'Validator yield',
+        dir: 'up',
+      });
+    } catch(e) {}
+
+    // 3. Blockchair data
+    if (state.blockchairData) {
+      const d = state.blockchairData;
+      const supply = weiToEth(d.circulation_approximate);
+      const burned = weiToEth(d.burned);
+      const burned24h = weiToEth(d.burned_24h);
+      const ethStaked = d.eth_staked || 0;
+      const stakedPct = ((ethStaked / supply) * 100).toFixed(2);
+
+      items.push({
+        name: 'Total Staked',
+        desc: 'blockchair.com',
+        value: (ethStaked / 1e6).toFixed(1) + 'M (' + stakedPct + '%)',
+        change: 'Entry > Exit',
+        dir: 'up',
+      });
+
+      // Net supply change: 24h burn vs issuance. PoS issuance ≈ 0 (very small), burned is from EIP-1559
+      // Net change ≈ -burned_24h (deflationary if burn > issuance)
+      const netChange24h = -burned24h; // negative = deflation
+      const annualizedPct = (netChange24h / supply * 365 * 100).toFixed(2);
+      items.push({
+        name: 'Net Supply Change',
+        desc: 'blockchair.com · annualized',
+        value: (annualizedPct >= 0 ? '+' : '') + annualizedPct + '%/yr',
+        change: annualizedPct < 0 ? 'Deflationary' : 'Inflationary',
+        dir: annualizedPct < 0 ? 'up' : 'down',
+      });
+
+      items.push({
+        name: 'Current Supply',
+        desc: 'blockchair.com',
+        value: fmtInt(supply) + ' ETH',
+        change: 'Total supply',
+        dir: 'up',
+      });
+    }
+
+    // 4. DeFi TVL from DefiLlama
+    try {
+      const chainsRes = await fetch('https://api.llama.fi/v2/chains');
+      const chains = await chainsRes.json();
+      const eth = chains.find(c => c.name === 'Ethereum');
+      if (eth) {
+        const tvlB = (eth.tvl / 1e9).toFixed(1);
+        const histRes = await fetch('https://api.llama.fi/v2/historicalChainTvl/Ethereum');
+        const hist = await histRes.json();
+        const recent7d = hist.slice(-7);
+        const change7d = recent7d.length >= 2 ? ((recent7d[recent7d.length-1].tvl - recent7d[0].tvl) / recent7d[0].tvl * 100).toFixed(1) : null;
+        items.push({
+          name: 'DeFi TVL',
+          desc: 'DefiLlama · live',
+          value: '$' + tvlB + 'B',
+          change: change7d ? (change7d >= 0 ? '+' : '') + change7d + '% (7d)' : 'Ethereum chain',
+          dir: change7d && parseFloat(change7d) >= 0 ? 'up' : 'down',
+        });
+      }
+    } catch(e) { items.push({name:'DeFi TVL', desc:'DefiLlama', value:'--', change:'Fetch failed', dir:'down'}); }
+
+    statusEl.textContent = 'LIVE';
+    statusEl.className = 'status-badge live';
+  } catch(e) {
+    console.error('Onchain error:', e);
+    statusEl.textContent = 'STALE';
+    statusEl.className = 'status-badge stale';
+  }
+
+  const list = document.getElementById('onchainList');
+  list.innerHTML = '';
+  items.forEach(o => {
+    list.innerHTML += `<div class="onchain-item" style="border-left:2px solid var(--green)">
+      <div class="onchain-item-left"><span class="onchain-item-name">${o.name}</span><span class="onchain-item-desc">${o.desc}</span></div>
+      <div><div class="onchain-item-value">${o.value}</div><div class="onchain-item-change ${o.dir}">${o.change}</div></div>
+    </div>`;
+  });
+}
+
+// ── Technical Indicators (CryptoCompare 200d) ──
+let histData = [];
+async function fetchHistory() {
+  try {
+    const res = await fetch('https://min-api.cryptocompare.com/data/v2/histoday?fsym=ETH&tsym=USD&limit=200');
+    histData = (await res.json()).Data.Data;
+    computeTechIndicators();
+    computeKeyLevels();
+    computeSignals();
+  } catch(e) { console.error('History error:', e); }
+}
+
+function computeTechIndicators() {
+  if (histData.length < 50) return;
+  const closes = histData.map(d => d.close);
+  const highs = histData.map(d => d.high);
+  const lows = histData.map(d => d.low);
+  const vols = histData.map(d => d.volumefrom);
+  const n = closes.length;
+  const last = closes[n-1];
+
+  const sma = (arr, p) => arr.length < p ? null : arr.slice(-p).reduce((a,b)=>a+b,0)/p;
+  const ema = (arr, p) => { if(arr.length<p)return null; const k=2/(p+1); let e=arr.slice(0,p).reduce((a,b)=>a+b,0)/p; for(let i=p;i<arr.length;i++) e=arr[i]*k+e*(1-k); return e; };
+  const rsi = (arr, p=14) => { if(arr.length<p+1)return null; let g=0,l=0; for(let i=arr.length-p;i<arr.length;i++){const d=arr[i]-arr[i-1];if(d>0)g+=d;else l-=d;} return l===0?100:100-100/(1+g/p/(l/p)); };
+  const macdCalc = arr => { const e12=ema(arr,12),e26=ema(arr,26); if(!e12||!e26)return{macd:0,signal:0,hist:0}; const ml=e12-e26; const k=2/10; const e12p=ema(arr.slice(0,-1),12),e26p=ema(arr.slice(0,-1),26); const mp=e12p&&e26p?e12p-e26p:0; const s=ml*k+mp*(1-k); return{macd:ml,signal:s,hist:ml-s}; };
+  const bollinger = (arr, p=20) => { if(arr.length<p)return null; const s=sma(arr,p); const sl=arr.slice(-p); const v=sl.reduce((su,x)=>su+(x-s)**2,0)/p; return{upper:s+2*Math.sqrt(v),middle:s,lower:s-2*Math.sqrt(v)}; };
+  const kdj = (h,l,c,p=9) => { if(c.length<p)return{k:50,d:50,j:50}; const hh=Math.max(...h.slice(-p)); const ll=Math.min(...l.slice(-p)); const rsv=hh===ll?50:((c[c.length-1]-ll)/(hh-ll))*100; const k=rsv; const d=(2*50+k)/3; return{k,d,j:3*k-2*d}; };
+  const obv = (c,v,lb=20) => { if(c.length<lb+1)return 0; let o=0; for(let i=c.length-lb;i<c.length;i++){if(c[i]>c[i-1])o+=v[i];else if(c[i]<c[i-1])o-=v[i];} return o; };
+  const atr = (h,l,c,p=14) => { if(c.length<p+1)return null; let s=0; for(let i=c.length-p;i<c.length;i++){s+=Math.max(h[i]-l[i],Math.abs(h[i]-c[i-1]),Math.abs(l[i]-c[i-1]));} return s/p; };
+
+  const avgVol20=sma(vols,20),avgVol5=sma(vols,5),volRatio=avgVol5&&avgVol20?avgVol5/avgVol20:1;
+  const rsiVal=rsi(closes),macdData=macdCalc(closes),ma20=sma(closes,20),ma50=sma(closes,50),ma200=sma(closes,200),bb=bollinger(closes),kdjData=kdj(highs,lows,closes),obvVal=obv(closes,vols),atrVal=atr(highs,lows,closes);
+
+  const techItems = [];
+  const sig = (v,bs,ss,inv) => { if(inv){if(v<=bs)return{cls:'buy',l:'Buy'};if(v>=ss)return{cls:'sell',l:'Sell'};return{cls:'neutral',l:'Neutral'};} if(v>=bs)return{cls:'buy',l:'Buy'};if(v<=ss)return{cls:'sell',l:'Sell'};return{cls:'neutral',l:'Neutral'}; };
+
+  if(rsiVal!==null) techItems.push({name:'RSI (14)',value:rsiVal.toFixed(1),...sig(rsiVal,55,45,false)});
+  techItems.push({name:'MACD',value:(macdData.hist>=0?'+':'')+macdData.hist.toFixed(2),...(macdData.hist>0?{cls:'buy',l:'Bullish'}:macdData.hist<0?{cls:'sell',l:'Bearish'}:{cls:'neutral',l:'Neutral'})});
+  if(ma20) techItems.push({name:'MA 20',value:'$'+ma20.toFixed(0),...(last>ma20?{cls:'buy',l:'Above'}:{cls:'sell',l:'Below'})});
+  if(ma50) techItems.push({name:'MA 50',value:'$'+ma50.toFixed(0),...(last>ma50?{cls:'buy',l:'Above'}:{cls:'sell',l:'Below'})});
+  if(ma200) techItems.push({name:'MA 200',value:'$'+ma200.toFixed(0),...(last>ma200?{cls:'buy',l:'Above'}:{cls:'sell',l:'Below'})});
+  if(bb){const pos=last>bb.upper?'Upper':last<bb.lower?'Lower':last>bb.middle?'Upper-Mid':'Lower-Mid'; techItems.push({name:'Bollinger',value:pos+' Band',...(last>bb.middle?{cls:'buy',l:pos}:last<bb.middle?{cls:'sell',l:pos}:{cls:'neutral',l:pos})});}
+  techItems.push({name:'KDJ',value:'K:'+kdjData.k.toFixed(0)+' D:'+kdjData.d.toFixed(0),...(kdjData.k>kdjData.d?{cls:'buy',l:'Golden Cross'}:{cls:'sell',l:'Death Cross'})});
+  techItems.push({name:'OBV (20d)',value:obvVal>0?'↑ Rising':'↓ Falling',...(obvVal>0?{cls:'buy',l:'Inflow'}:{cls:'sell',l:'Outflow'})});
+  if(atrVal){const p=(atrVal/last*100); techItems.push({name:'ATR (14)',value:'$'+atrVal.toFixed(1)+' ('+p.toFixed(1)+'%)',...(p>4?{cls:'sell',l:'High Vol'}:p>2?{cls:'neutral',l:'Moderate'}:{cls:'buy',l:'Low Vol'})});}
+  techItems.push({name:'Volume',value:volRatio.toFixed(2)+'x avg',...(volRatio>1.3?{cls:'buy',l:'High'}:volRatio<0.7?{cls:'sell',l:'Low'}:{cls:'neutral',l:'Normal'})});
+
+  const grid = document.getElementById('techGrid');
+  grid.innerHTML = '';
+  techItems.forEach(t => { grid.innerHTML += `<div class="tech-item"><span class="tech-item-name">${t.name}</span><div style="display:flex;align-items:center"><span class="tech-item-value">${t.value}</span><span class="tech-item-signal ${t.cls}">${t.l}</span></div></div>`; });
+
+  // Verdict
+  const buyCount = techItems.filter(t=>t.cls==='buy').length;
+  const sellCount = techItems.filter(t=>t.cls==='sell').length;
+  const sigEl = document.getElementById('verdictSignal');
+  const txtEl = document.getElementById('verdictText');
+  const subEl = document.getElementById('verdictSub');
+  if(buyCount>sellCount+2){sigEl.style.color='var(--green)';sigEl.textContent='● Strong Bullish';txtEl.textContent='Bullish Trend';}
+  else if(buyCount>sellCount){sigEl.style.color='var(--green)';sigEl.textContent='● Lean Bullish';txtEl.textContent='Gradual Upside';}
+  else if(sellCount>buyCount+2){sigEl.style.color='var(--red)';sigEl.textContent='● Strong Bearish';txtEl.textContent='Bearish Trend';}
+  else if(sellCount>buyCount){sigEl.style.color='var(--red)';sigEl.textContent='● Lean Bearish';txtEl.textContent='Gradual Downside';}
+  else{sigEl.style.color='var(--orange)';sigEl.textContent='● Neutral';txtEl.textContent='Sideways';}
+  subEl.innerHTML = `Technical: <strong>${buyCount} Buy / ${sellCount} Sell</strong>, ${state.blockchairData ? 'Total staked ' + fmtM(state.blockchairData.eth_staked||0) + ' ETH, staking demand continues' : 'Loading staking data'}.`;
+}
+
+function computeKeyLevels() {
+  if(histData.length<20) return;
+  const closes=histData.map(d=>d.close),n=closes.length,last=closes[n-1];
+  const ma20=closes.slice(-20).reduce((a,b)=>a+b,0)/20;
+  const ma50=closes.slice(-50).reduce((a,b)=>a+b,0)/50;
+  const ma200=n>=200?closes.slice(-200).reduce((a,b)=>a+b,0)/200:null;
+  const recent=closes.slice(-Math.min(60,n));
+  const levels=[
+    {price:Math.max(...recent),label:'60d High'},
+    ...(ma200&&ma200>last?[{price:ma200,label:'MA200'}]:[]),
+    {price:last*1.03,label:'Resistance'},
+    {price:last,label:'Current',isCurrent:true},
+    {price:ma20,label:'MA20'},
+    {price:ma50,label:'MA50'},
+    {price:Math.min(...recent),label:'60d Low'},
+  ].filter(l=>l.price>0).sort((a,b)=>b.price-a.price);
+  const track=document.getElementById('levelsTrack');
+  track.innerHTML='';
+  levels.forEach(l=>{
+    const tag=l.isCurrent?'current':l.price>last?'resist':'support';
+    track.innerHTML+=`<div class="level-row"><span class="level-label" style="color:${l.isCurrent?'var(--accent)':'var(--text-dim)'}">$${l.price.toFixed(0)}</span><span class="level-line"></span><span class="level-tag ${tag}">${l.label}</span></div>`;
+  });
+}
+
+function computeSignals() {
+  if(histData.length<50) return;
+  const closes=histData.map(d=>d.close),n=closes.length,last=closes[n-1];
+  const ma20=closes.slice(-20).reduce((a,b)=>a+b,0)/20;
+  const ma50=closes.slice(-50).reduce((a,b)=>a+b,0)/50;
+  const ma200=n>=200?closes.slice(-200).reduce((a,b)=>a+b,0)/200:last;
+  let g=0,l=0; for(let i=n-14;i<n;i++){const d=closes[i]-closes[i-1];if(d>0)g+=d;else l-=d;}
+  const r=l===0?100:100-100/(1+g/l);
+  function ema(a,p){const k=2/(p+1);let e=a.slice(0,p).reduce((x,y)=>x+y,0)/p;for(let i=p;i<a.length;i++)e=a[i]*k+e*(1-k);return e;}
+  const ml=ema(closes,12)-ema(closes,26);
+  const mb=[last>ma20,last>ma50,last>ma200].filter(Boolean).length;
+  const ms=3-mb;
+  const rb=r>55?1:0,rs=r<45?1:0;
+  const mab=ml>0?1:0,mas=ml<0?1:0;
+  const tb=mb+rb+mab,ts=ms+rs+mas,sc=tb+ts>0?(tb/(tb+ts)*10).toFixed(0):5;
+  const signals=[
+    {label:'Moving Avg',value:`Buy ${mb} / Sell ${ms}`,sub:mb>ms?'Bullish':mb<ms?'Bearish':'Neutral'},
+    {label:'Oscillators',value:`Buy ${rb+mab} / Sell ${rs+mas}`,sub:rb+mab>rs+mas?'Bullish':'Bearish'},
+    {label:'RSI (14)',value:r.toFixed(1),sub:r>55?'Bullish zone':r<45?'Bearish zone':'Neutral zone'},
+    {label:'MACD',value:(ml>=0?'+':'')+ml.toFixed(2),sub:ml>0?'Bullish momentum':'Bearish momentum'},
+    {label:'Overall',value:sc>=7?'Strong Buy':sc>=5?'Bullish':sc>=3?'Bearish':'Strong Sell',sub:`${sc}/10`},
+    {label:'Price vs MA200',value:last>ma200?'Above MA200':'Below MA200',sub:last>ma200?'Long-term bullish':'Long-term bearish'},
+  ];
+  const grid=document.getElementById('signalGrid');
+  grid.innerHTML='';
+  signals.forEach(s=>{
+    const c=s.sub.includes('Bull')||s.sub.includes('Buy')?'var(--green)':s.sub.includes('Bear')||s.sub.includes('Sell')?'var(--red)':'var(--orange)';
+    grid.innerHTML+=`<div class="signal-item"><div class="signal-item-label">${s.label}</div><div class="signal-item-value" style="color:${c}">${s.value}</div><div class="signal-item-sub">${s.sub}</div></div>`;
+  });
+}
+
+// ── Init ──
+(async () => {
+  await fetchBlockchair();
+  fetchQueue();
+  await fetchOnchain();
+  fetchHistory();
+})();
+setInterval(fetchOnchain, 600000);
+setInterval(fetchQueue, 900000);
+</script>
+
+</body>
+</html>
