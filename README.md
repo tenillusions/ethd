@@ -26,7 +26,9 @@ Ethereum analytics dashboard with real-time market data, on-chain metrics, and t
 
 ## Usage
 
-Open `eth-dashboard.html` in a browser. No build step, no dependencies — everything runs client-side.
+Open `index.html` in a browser. No build step, no dependencies — everything runs client-side.
+
+Live: https://tenillusions.github.io/ethd/
 
 ## License
 
