@@ -395,7 +395,8 @@ async function fetchQueue() {
   try {
     statusEl.textContent = 'REFRESHING';
     statusEl.className = 'status-badge stale';
-    const res = await fetch('https://www.validatorqueue.com', { signal: AbortSignal.timeout(10000) });
+    const proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent('https://www.validatorqueue.com');
+    const res = await fetch(proxyUrl, { signal: AbortSignal.timeout(15000) });
     const html = await res.text();
     if (!html || html.length < 500) throw new Error('Empty response');
     const parsed = parseQueueFromHTML(html);
@@ -411,7 +412,7 @@ async function fetchQueue() {
     console.error('Queue fetch error:', e);
     statusEl.textContent = 'OFFLINE';
     statusEl.className = 'status-badge offline';
-    sourceEl.textContent = 'validatorqueue.com unreachable';
+    sourceEl.textContent = 'validatorqueue.com via proxy — retry failed';
     document.getElementById('queueEntry').textContent = '--';
     document.getElementById('queueEntrySub').textContent = 'Network unreachable';
     document.getElementById('queueExit').textContent = '--';
@@ -632,7 +633,7 @@ function computeTechIndicators() {
   else if(sellCount>buyCount+2){sigEl.style.color='var(--red)';sigEl.textContent='● Strong Bearish';txtEl.textContent='Bearish Trend';}
   else if(sellCount>buyCount){sigEl.style.color='var(--red)';sigEl.textContent='● Lean Bearish';txtEl.textContent='Gradual Downside';}
   else{sigEl.style.color='var(--orange)';sigEl.textContent='● Neutral';txtEl.textContent='Sideways';}
-  subEl.innerHTML = `Technical: <strong>${buyCount} Buy / ${sellCount} Sell</strong>, ${state.blockchairData ? 'Total staked ' + fmtM(state.blockchairData.eth_staked||0) + ' ETH, staking demand continues' : 'Loading staking data'}.`;
+  subEl.innerHTML = `Technical: <strong>${buyCount} Buy / ${sellCount} Sell</strong>.`;
 }
 
 function computeKeyLevels() {
