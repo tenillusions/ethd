@@ -89,6 +89,34 @@
   @keyframes fadeUp{to{opacity:1;transform:translateY(0)}}
   .fg-levels-row{display:flex;gap:1.5rem}
   .fg-levels-divider{width:1px;background:var(--border);flex-shrink:0}
+  @media(min-width:769px){
+    .queue-grid{display:flex;gap:.8rem}
+    .queue-grid .queue-item{flex:1;padding:.6rem .8rem}
+    .queue-grid .queue-item-value{font-size:1.2rem}
+    .queue-grid .queue-item-sub{font-size:.65rem}
+    .queue-grid .queue-item-label{font-size:.6rem;margin-bottom:.3rem}
+    .hide-desktop{display:none!important}
+    .onchain-list{grid-template-columns:1fr 1fr 1fr 1fr;gap:.4rem}
+    .onchain-item{padding:.4rem .5rem;flex-direction:column;align-items:flex-start;gap:.15rem}
+    .onchain-item-value{font-size:.78rem;text-align:left}
+    .onchain-item-change{text-align:left}
+    .tech-item{padding:.45rem .6rem}
+    .tech-item-value{font-size:.78rem}
+    .tech-item-signal{font-size:.52rem;padding:.1rem .25rem}
+    .card{padding:1rem 1.2rem}
+    .price-card{padding:1.2rem 1.5rem}
+    .price-value{font-size:2.8rem}
+    .footer{padding:1rem 0 .5rem;font-size:.58rem}
+  }
+  @media(min-width:1400px){
+    .dashboard{grid-template-columns:1fr 1fr 1fr 1fr}
+    .price-card{grid-column:span 3!important}
+    .fg-card{grid-column:span 1!important}
+    .staking-card{grid-column:span 1!important;grid-row:span 2}
+    .tech-card{grid-column:span 3!important}
+    .onchain-card{grid-column:span 4!important}
+    .footer{grid-column:span 4!important}
+  }
   @media(max-width:1200px){.dashboard{grid-template-columns:1fr 1fr;padding:1rem 1.5rem 3rem}.price-card,.staking-card{grid-column:span 2}.footer{grid-column:span 2}.header{padding:1.5rem}}
   @media(max-width:768px){
     .dashboard{grid-template-columns:1fr;padding:.75rem 1rem 2rem;gap:.75rem}
@@ -154,7 +182,7 @@
   </div>
 
   <!-- FEAR & GREED + KEY LEVELS (merged card) -->
-  <div class="card" style="grid-column:span 2">
+  <div class="card fg-card" style="grid-column:span 2">
     <div class="fg-levels-row">
       <!-- Left: Fear & Greed -->
       <div style="flex:1;display:flex;flex-direction:column">
@@ -200,7 +228,7 @@
       <div class="queue-item"><div class="queue-item-label">Active Validators</div><div class="queue-item-value accent" id="validators">--</div><div class="queue-item-sub" id="validatorsSub">--</div></div>
     </div>
     <!-- Pressure bars -->
-    <div style="display:flex;gap:1.5rem;margin-top:.5rem">
+    <div class="hide-desktop" style="display:flex;gap:1.5rem;margin-top:.5rem">
       <div style="flex:1;display:flex;flex-direction:column;gap:.3rem">
         <div style="display:flex;justify-content:space-between;font-size:.62rem;color:var(--text-muted)">
           <span>Entry Pressure</span><span id="entryPressureLabel">--</span>
@@ -218,23 +246,23 @@
         </div>
       </div>
     </div>
-    <div style="margin-top:.6rem;text-align:center;font-size:.65rem;color:var(--text-dim)">Entry / Exit = <span style="color:var(--green);font-family:'DM Mono',monospace" id="queueRatio">--</span></div>
-    <div style="margin-top:.8rem"><span style="font-size:.68rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.1em">Entry/Exit Trend (30 days)</span></div>
-    <div class="bar-chart" id="queueChart" style="margin-top:.4rem"><div class="loading">Loading...</div></div>
-    <div class="chart-legend" style="margin-top:.4rem">
+    <div class="hide-desktop" style="margin-top:.6rem;text-align:center;font-size:.65rem;color:var(--text-dim)">Entry / Exit = <span style="color:var(--green);font-family:'DM Mono',monospace" id="queueRatio">--</span></div>
+    <div class="hide-desktop" style="margin-top:.8rem"><span style="font-size:.68rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.1em">Entry/Exit Trend (30 days)</span></div>
+    <div class="bar-chart hide-desktop" id="queueChart" style="margin-top:.4rem"><div class="loading">Loading...</div></div>
+    <div class="chart-legend hide-desktop" style="margin-top:.4rem">
       <div class="chart-legend-item"><span class="swatch" style="background:var(--green);opacity:.7"></span>Entry</div>
       <div class="chart-legend-item"><span class="swatch" style="background:var(--red);opacity:.7"></span>Exit</div>
     </div>
   </div>
 
   <!-- TECHNICAL INDICATORS -->
-  <div class="card" style="grid-column:span 2">
+  <div class="card tech-card" style="grid-column:span 2">
     <div class="card-label"><span class="dot" style="background:var(--purple)"></span>Technical Indicators <span class="data-source">CryptoCompare 200d data</span></div>
     <div class="tech-grid" id="techGrid"><div class="loading">Computing...</div></div>
   </div>
 
   <!-- ON-CHAIN -->
-  <div class="card" style="grid-column:span 2">
+  <div class="card onchain-card" style="grid-column:span 2">
     <div class="card-label"><span class="dot" style="background:var(--cyan)"></span>On-chain Data <span class="status-badge live" id="onchainStatus">LIVE</span> <span class="data-source">Blockchair · ultrasound.money · DefiLlama · Lido</span></div>
     <div class="onchain-list" id="onchainList"><div class="loading">Loading...</div></div>
   </div>
