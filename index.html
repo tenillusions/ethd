@@ -87,8 +87,32 @@
   .card{opacity:0;transform:translateY(12px);animation:fadeUp .5s cubic-bezier(.16,1,.3,1) forwards}
   .card:nth-child(1){animation-delay:.05s}.card:nth-child(2){animation-delay:.1s}.card:nth-child(3){animation-delay:.15s}.card:nth-child(4){animation-delay:.2s}.card:nth-child(5){animation-delay:.25s}.card:nth-child(6){animation-delay:.3s}.card:nth-child(7){animation-delay:.35s}.card:nth-child(8){animation-delay:.4s}
   @keyframes fadeUp{to{opacity:1;transform:translateY(0)}}
+  .fg-levels-row{display:flex;gap:1.5rem}
+  .fg-levels-divider{width:1px;background:var(--border);flex-shrink:0}
   @media(max-width:1200px){.dashboard{grid-template-columns:1fr 1fr;padding:1rem 1.5rem 3rem}.price-card,.staking-card{grid-column:span 2}.footer{grid-column:span 2}.header{padding:1.5rem}}
-  @media(max-width:768px){.dashboard{grid-template-columns:1fr}.price-card,.staking-card,.footer{grid-column:span 1}[style*="grid-column:span 2"]{grid-column:span 1!important}.queue-grid{grid-template-columns:1fr}.tech-grid{grid-template-columns:1fr}.onchain-list{grid-template-columns:1fr}.header{flex-direction:column;align-items:flex-start;gap:.8rem}.price-value{font-size:2.4rem}.price-meta{flex-wrap:wrap;gap:1.2rem}}
+  @media(max-width:768px){
+    .dashboard{grid-template-columns:1fr;padding:.75rem 1rem 2rem;gap:.75rem}
+    .price-card,.staking-card,.footer{grid-column:span 1}
+    [style*="grid-column:span 2"]{grid-column:span 1!important}
+    .card{padding:1.1rem}
+    .header{flex-direction:column;align-items:flex-start;gap:.6rem;padding:1rem 1rem .8rem}
+    .header-left h1{font-size:1.6rem}
+    .header-left p{font-size:.72rem}
+    .price-value{font-size:2rem}
+    .price-main{gap:.8rem;flex-wrap:wrap}
+    .price-change{font-size:.85rem}
+    .price-meta{flex-wrap:wrap;gap:.8rem 1.5rem}
+    .queue-grid{grid-template-columns:1fr;gap:.8rem}
+    .queue-item-value{font-size:1.3rem}
+    .tech-grid{grid-template-columns:1fr}
+    .onchain-list{grid-template-columns:1fr}
+    .fg-levels-row{flex-direction:column;gap:1rem}
+    .fg-levels-divider{width:100%;height:1px}
+    .level-label{min-width:50px;font-size:.65rem}
+    .bar-chart{height:60px}
+    .card-label{font-size:.62rem;margin-bottom:.8rem}
+    .footer{padding:1.5rem 0 .8rem;font-size:.58rem}
+  }
 </style>
 </head>
 <body>
@@ -131,7 +155,7 @@
 
   <!-- FEAR & GREED + KEY LEVELS (merged card) -->
   <div class="card" style="grid-column:span 2">
-    <div style="display:flex;gap:1.5rem">
+    <div class="fg-levels-row">
       <!-- Left: Fear & Greed -->
       <div style="flex:1;display:flex;flex-direction:column">
         <div class="card-label"><span class="dot" style="background:var(--yellow)"></span>Fear &amp; Greed Index <span class="status-badge live" id="fgStatus">LIVE</span></div>
@@ -156,7 +180,7 @@
         </div>
       </div>
       <!-- Divider -->
-      <div style="width:1px;background:var(--border);flex-shrink:0"></div>
+      <div class="fg-levels-divider"></div>
       <!-- Right: Key Levels -->
       <div style="flex:1;display:flex;flex-direction:column">
         <div class="card-label"><span class="dot" style="background:var(--red)"></span>Key Price Levels</div>
