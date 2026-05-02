@@ -498,10 +498,11 @@ async function fetchOnchain() {
         });
       }
 
-      // Net supply change: PoS issuance (estimated) minus EIP-1559 burn
-      // Each validator earns ~0.047 ETH/day (attestation + proposal rewards)
-      const validators = queueData ? parseInt((queueData.validators || '0').replace(/,/g, '')) : 0;
-      const issuance24h = validators * 0.047;
+      // Net supply change: PoS issuance minus EIP-1559 burn
+      // Issuance scales with sqrt(staked_ratio). Calibrated: ~680k ETH/yr at 31.7% staked
+      const stakedPctNum = queueData?.stakedPct ? parseFloat(queueData.stakedPct) : 31.7;
+      const issuanceYear = 680000 * Math.sqrt(stakedPctNum / 31.7);
+      const issuance24h = issuanceYear / 365;
       const netChange24h = issuance24h - burned24h;
       const annualizedPct = (netChange24h / supply * 365 * 100).toFixed(2);
       items.push({
@@ -568,7 +569,6 @@ async function fetchHistory() {
     histData = (await res.json()).Data.Data;
     computeTechIndicators();
     computeKeyLevels();
-    computeSignals();
   } catch(e) { console.error('History error:', e); }
 }
 
@@ -608,7 +608,7 @@ function computeTechIndicators() {
   techItems.forEach(t => { techHtml += `<div class="tech-item"><span class="tech-item-name">${t.name}</span><div style="display:flex;align-items:center"><span class="tech-item-value">${t.value}</span><span class="tech-item-signal ${t.cls}">${t.l}</span></div></div>`; });
   document.getElementById('techGrid').innerHTML = techHtml;
 
-  // Verdict
+  // Verdict — uses same techItems as Technical Indicators
   const buyCount = techItems.filter(t=>t.cls==='buy').length;
   const sellCount = techItems.filter(t=>t.cls==='sell').length;
   const sigEl = document.getElementById('verdictSignal');
@@ -619,7 +619,10 @@ function computeTechIndicators() {
   else if(sellCount>buyCount+2){sigEl.style.color='var(--red)';sigEl.textContent='● Strong Bearish';txtEl.textContent='Bearish Trend';}
   else if(sellCount>buyCount){sigEl.style.color='var(--red)';sigEl.textContent='● Lean Bearish';txtEl.textContent='Gradual Downside';}
   else{sigEl.style.color='var(--orange)';sigEl.textContent='● Neutral';txtEl.textContent='Sideways';}
-  subEl.innerHTML = `Technical: <strong>${buyCount} Buy / ${sellCount} Sell</strong>.`;
+  subEl.innerHTML = `Technical: <strong>${buyCount} Buy / ${sellCount} Sell</strong> across ${techItems.length} indicators.`;
+
+  // Pass techItems to Signals for consistent Overall score
+  computeSignals(techItems);
 }
 
 function computeKeyLevels() {
@@ -644,17 +647,23 @@ function computeKeyLevels() {
   document.getElementById('levelsTrack').innerHTML=levelsHtml;
 }
 
-function computeSignals() {
+function computeSignals(techItems) {
   if(histData.length<50) return;
   const closes=histData.map(d=>d.close),n=closes.length,last=closes[n-1];
   const ma20=sma(closes,20),ma50=sma(closes,50),ma200=sma(closes,200)||last;
   const r=rsi(closes);
   const ml=ema(closes,12)-ema(closes,26);
+
+  // Use same techItems as Verdict for consistent Overall score
+  const bc = techItems.filter(t=>t.cls==='buy').length;
+  const sc_count = techItems.filter(t=>t.cls==='sell').length;
+  const total = bc + sc_count;
+  const sc = total > 0 ? Math.round(bc / total * 10) : 5;
+
   const mb=[last>ma20,last>ma50,last>ma200].filter(Boolean).length;
   const ms=3-mb;
   const rb=r>55?1:0,rs=r<45?1:0;
   const mab=ml>0?1:0,mas=ml<0?1:0;
-  const tb=mb+rb+mab,ts=ms+rs+mas,sc=tb+ts>0?(tb/(tb+ts)*10).toFixed(0):5;
   const signals=[
     {label:'Moving Avg',value:`Buy ${mb} / Sell ${ms}`,sub:mb>ms?'Bullish':mb<ms?'Bearish':'Neutral'},
     {label:'Oscillators',value:`Buy ${rb+mab} / Sell ${rs+mas}`,sub:rb+mab>rs+mas?'Bullish':'Bearish'},
