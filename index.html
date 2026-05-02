@@ -485,26 +485,28 @@ async function fetchOnchain() {
     if (state.blockchairData) {
       const d = state.blockchairData;
       const supply = weiToEth(d.circulation_approximate);
-      const burned = weiToEth(d.burned);
       const burned24h = weiToEth(d.burned_24h);
-      const ethStaked = d.eth_staked || 0;
-      const stakedPct = ((ethStaked / supply) * 100).toFixed(2);
 
-      items.push({
-        name: 'Total Staked',
-        desc: 'blockchair.com',
-        value: (ethStaked / 1e6).toFixed(1) + 'M (' + stakedPct + '%)',
-        change: 'Entry > Exit',
-        dir: 'up',
-      });
+      // Total Staked — prefer queue data (from validatorqueue.com)
+      if (queueData) {
+        items.push({
+          name: 'Total Staked',
+          desc: 'validatorqueue.com',
+          value: (queueData.staked || '--') + ' (' + (queueData.stakedPct || '--') + ')',
+          change: queueData.apr ? 'APR ' + queueData.apr : 'Entry > Exit',
+          dir: 'up',
+        });
+      }
 
-      // Net supply change: 24h burn vs issuance. PoS issuance ≈ 0 (very small), burned is from EIP-1559
-      // Net change ≈ -burned_24h (deflationary if burn > issuance)
-      const netChange24h = -burned24h; // negative = deflation
+      // Net supply change: PoS issuance (estimated) minus EIP-1559 burn
+      // Each validator earns ~0.047 ETH/day (attestation + proposal rewards)
+      const validators = queueData ? parseInt((queueData.validators || '0').replace(/,/g, '')) : 0;
+      const issuance24h = validators * 0.047;
+      const netChange24h = issuance24h - burned24h;
       const annualizedPct = (netChange24h / supply * 365 * 100).toFixed(2);
       items.push({
         name: 'Net Supply Change',
-        desc: 'blockchair.com · annualized',
+        desc: 'burn vs issuance · annualized',
         value: (annualizedPct >= 0 ? '+' : '') + annualizedPct + '%/yr',
         change: annualizedPct < 0 ? 'Deflationary' : 'Inflationary',
         dir: annualizedPct < 0 ? 'up' : 'down',
