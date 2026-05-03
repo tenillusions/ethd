@@ -100,8 +100,11 @@
     .fg-levels-divider{width:100%;height:1px}
     .queue-grid{grid-template-columns:1fr;gap:.8rem}
     .queue-item-value{font-size:1.3rem}
-    .tech-grid{grid-template-columns:1fr 1fr}
-    .tech-item{padding:.4rem .5rem}
+    .tech-grid{grid-template-columns:1fr 1fr;gap:.35rem}
+    .tech-item{padding:.35rem .45rem;white-space:normal;flex-wrap:wrap}
+    .tech-item-name{font-size:.52rem}
+    .tech-item-value{font-size:.72rem}
+    .tech-item-signal{font-size:.45rem;padding:.08rem .25rem}
     .onchain-list{grid-template-columns:1fr}
     .level-label{min-width:50px;font-size:.65rem}
     .bar-chart{height:60px}
@@ -408,9 +411,9 @@ async function fetchQueue() {
 function renderQueue() {
   if (!queueData) return;
   const d = queueData;
-  document.getElementById('queueEntry').textContent = (d.entry || '--') + '\nETH';
+  document.getElementById('queueEntry').textContent = (d.entry || '--') + ' ETH';
   document.getElementById('queueEntrySub').textContent = d.entryWait ? 'Est. wait ≈ ' + d.entryWait + (d.entryChurn ? '\nChurn ' + d.entryChurn : '') : '--';
-  document.getElementById('queueExit').textContent = (d.exit || '--') + '\nETH';
+  document.getElementById('queueExit').textContent = (d.exit || '--') + ' ETH';
   document.getElementById('queueExitSub').textContent = d.exitWait ? 'Est. wait ≈ ' + d.exitWait + (d.sweep ? '\nSweep ' + d.sweep : '') : '--';
   const entryNum = parseInt((d.entry || '0').replace(/,/g, ''));
   const exitNum = parseInt((d.exit || '0').replace(/,/g, ''));
