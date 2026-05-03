@@ -617,15 +617,16 @@ function computeKeyLevels() {
   const closes=histData.map(d=>d.close),n=closes.length,last=closes[n-1];
   const ma20=sma(closes,20),ma50=sma(closes,50),ma200=sma(closes,200);
   const recent=closes.slice(-Math.min(60,n));
+  const hi=Math.max(...recent),lo=Math.min(...recent),range=hi-lo;
+  const fib=[{p:0.382,l:'Fib 38.2%'},{p:0.5,l:'Fib 50%'},{p:0.618,l:'Fib 61.8%'}];
   const levels=[
-    {price:Math.max(...recent),label:'60d High'},
+    {price:hi,label:'60d High'},
     ...(ma200&&ma200>last?[{price:ma200,label:'MA200'}]:[]),
-    {price:last*1.03,label:'Resistance'},
     {price:last,label:'Current',isCurrent:true},
     {price:ma20,label:'MA20'},
     {price:ma50,label:'MA50'},
-    {price:last*0.95,label:'Support'},
-    {price:Math.min(...recent),label:'60d Low'},
+    ...fib.filter(f=>hi-range*f.p<last).map(f=>({price:hi-range*f.p,label:f.l})),
+    {price:lo,label:'60d Low'},
   ].filter(l=>l.price>0).sort((a,b)=>b.price-a.price);
   let levelsHtml='';
   levels.forEach(l=>{
