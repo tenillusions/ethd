@@ -654,7 +654,7 @@ function computeTechIndicators() {
   const sc = finalScore;
   const verdict = sc>=20?'Highly Recommended Buy':sc>=8?'Recommended Buy':sc>=-8?'Hold':sc>=-20?'Recommended Sell':'Highly Recommended Sell';
   const verdictColor = sc>=8?'var(--green)':sc<=-8?'var(--red)':'var(--orange)';
-  document.getElementById('techSummary').innerHTML = `<span style="color:${verdictColor};font-weight:500">${verdict}</span> — Score ${(sc>0?'+':'')+sc.toFixed(0)} (-100 ~ +100)`;
+  document.getElementById('techSummary').innerHTML = `<span style="color:${verdictColor};font-weight:500">${verdict}</span> — Score ${(sc>0?'+':'')+sc.toFixed(1)} (-100 ~ +100)`;
 }
 
 function computeKeyLevels() {
