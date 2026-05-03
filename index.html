@@ -594,7 +594,7 @@ function computeTechIndicators() {
   if(ma20) techItems.push({name:'MA 20',value:'$'+ma20.toFixed(0),...(last>ma20?{cls:'buy',l:'Above'}:{cls:'sell',l:'Below'})});
   if(ma50) techItems.push({name:'MA 50',value:'$'+ma50.toFixed(0),...(last>ma50?{cls:'buy',l:'Above'}:{cls:'sell',l:'Below'})});
   if(ma200) techItems.push({name:'MA 200',value:'$'+ma200.toFixed(0),...(last>ma200?{cls:'buy',l:'Above'}:{cls:'sell',l:'Below'})});
-  if(bb){const pos=last>bb.upper?'Upper':last<bb.lower?'Lower':last>bb.middle?'Upper-Mid':'Lower-Mid'; techItems.push({name:'Bollinger',value:pos+' Band',...(last>bb.middle?{cls:'buy',l:pos}:last<bb.middle?{cls:'sell',l:pos}:{cls:'neutral',l:pos})});}
+  if(bb){const pos=last>bb.upper?'Upper':last<bb.lower?'Lower':last>bb.middle?'Upper-Mid':'Lower-Mid'; techItems.push({name:'Bollinger',value:pos,cls:last>bb.upper?'sell':last<bb.lower?'buy':last>bb.middle?'buy':'sell',l:last>bb.upper?'Overbought':last<bb.lower?'Oversold':last>bb.middle?'Above Mid':'Below Mid'});}
   techItems.push({name:'KDJ',value:'K:'+kdjData.k.toFixed(0)+' D:'+kdjData.d.toFixed(0),...(kdjData.k>kdjData.d?{cls:'buy',l:'Golden Cross'}:{cls:'sell',l:'Death Cross'})});
   techItems.push({name:'OBV (20d)',value:obvVal>0?'↑ Rising':'↓ Falling',...(obvVal>0?{cls:'buy',l:'Inflow'}:{cls:'sell',l:'Outflow'})});
   if(atrVal){const p=(atrVal/last*100); techItems.push({name:'ATR (14)',value:'$'+atrVal.toFixed(1)+' ('+p.toFixed(1)+'%)',...(p>4?{cls:'sell',l:'High Vol'}:p>2?{cls:'neutral',l:'Moderate'}:{cls:'buy',l:'Low Vol'})});}
