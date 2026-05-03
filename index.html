@@ -624,6 +624,7 @@ function computeKeyLevels() {
     {price:last,label:'Current',isCurrent:true},
     {price:ma20,label:'MA20'},
     {price:ma50,label:'MA50'},
+    {price:last*0.95,label:'Support'},
     {price:Math.min(...recent),label:'60d Low'},
   ].filter(l=>l.price>0).sort((a,b)=>b.price-a.price);
   let levelsHtml='';
