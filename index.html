@@ -108,16 +108,17 @@
     .price-value{font-size:2.8rem}
     .footer{padding:1rem 0 .5rem;font-size:.58rem}
   }
-  @media(min-width:1400px){
-    .dashboard{grid-template-columns:1fr 1fr 1fr 1fr}
+  @media(min-width:1200px){
+    .dashboard{grid-template-columns:1fr 1fr 1fr 1fr;padding:1rem 1.5rem 2rem}
     .price-card{grid-column:span 3!important}
     .fg-card{grid-column:span 1!important}
     .staking-card{grid-column:span 1!important;grid-row:span 2}
     .tech-card{grid-column:span 3!important}
     .onchain-card{grid-column:span 4!important}
     .footer{grid-column:span 4!important}
+    .header{padding:1.2rem 1.5rem 1rem}
   }
-  @media(max-width:1200px){.dashboard{grid-template-columns:1fr 1fr;padding:1rem 1.5rem 3rem}.price-card,.staking-card{grid-column:span 2}.footer{grid-column:span 2}.header{padding:1.5rem}}
+  @media(max-width:1199px){.dashboard{grid-template-columns:1fr 1fr;padding:1rem 1.5rem 3rem}.price-card,.staking-card{grid-column:span 2}.footer{grid-column:span 2}.header{padding:1.5rem}}
   @media(max-width:768px){
     .dashboard{grid-template-columns:1fr;padding:.75rem 1rem 2rem;gap:.75rem}
     .price-card,.staking-card,.footer{grid-column:span 1}
