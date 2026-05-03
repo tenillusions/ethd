@@ -655,7 +655,7 @@ function computeTechIndicators() {
   const bearCount = techItems.filter(t=>t.cls==='sell').length;
   const neutCount = techItems.length - bullCount - bearCount;
   const sc = finalScore;
-  const verdict = sc>=20?'Strong Buy':sc>=8?'Buy':sc>=-8?'Neutral':sc>=-20?'Sell':'Strong Sell';
+  const verdict = sc>=20?'Highly Recommended':sc>=8?'Recommended':sc>=-8?'Neutral':sc>=-20?'Not Recommended':'Avoid';
   const verdictColor = sc>=8?'var(--green)':sc<=-8?'var(--red)':'var(--orange)';
   document.getElementById('techSummary').innerHTML = `<span style="color:${verdictColor};font-weight:500">${verdict}</span> ${(sc>0?'+':'')+sc.toFixed(0)} — ${bullCount} Buy · ${bearCount} Sell · ${neutCount} Hold`;
 }
