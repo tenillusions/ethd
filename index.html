@@ -651,12 +651,13 @@ function computeTechIndicators() {
   document.getElementById('techGrid').innerHTML = techHtml;
 
   // Summary: weighted score
-  const buyCount = techItems.filter(t=>t.cls==='buy').length;
-  const sellCount = techItems.filter(t=>t.cls==='sell').length;
+  const bullCount = techItems.filter(t=>t.cls==='buy').length;
+  const bearCount = techItems.filter(t=>t.cls==='sell').length;
+  const neutCount = techItems.length - bullCount - bearCount;
   const sc = finalScore;
-  const verdict = sc>=15?'Strong Bullish':sc>=5?'Lean Bullish':sc>-5?'Neutral':sc>-15?'Lean Bearish':'Strong Bearish';
-  const verdictColor = sc>0?'var(--green)':sc<0?'var(--red)':'var(--orange)';
-  document.getElementById('techSummary').innerHTML = `<span style="color:${verdictColor};font-weight:500">${verdict}</span> — Score ${(sc>0?'+':'')+sc.toFixed(0)} · ${buyCount} Buy / ${sellCount} Sell / ${techItems.length} Total`;
+  const verdict = sc>=20?'Strong Bullish':sc>=8?'Bullish':sc>=-8?'Neutral':sc>=-20?'Bearish':'Strong Bearish';
+  const verdictColor = sc>=8?'var(--green)':sc<=-8?'var(--red)':'var(--orange)';
+  document.getElementById('techSummary').innerHTML = `<span style="color:${verdictColor};font-weight:500">${verdict}</span> ${(sc>0?'+':'')+sc.toFixed(0)} — ${bullCount} Bull · ${bearCount} Bear · ${neutCount} Neutral`;
 }
 
 function computeKeyLevels() {
