@@ -629,7 +629,7 @@ function computeTechIndicators() {
   const momScore = ((scores.rsi||0)*1 + (scores.macd||0)*1.2 + (scores.kdj||0)*0.8) / 3;
   const volScore = (scores.bb||0);
   const volFlow = ((scores.obv||0)*1 + (scores.vol||0)*1) / 2;
-  const finalScore = (trendScore*40 + momScore*30 + volScore*15 + volFlow*15) / 10;
+  const finalScore = (trendScore*40 + momScore*30 + volScore*15 + volFlow*15) / 1.925;
 
   // Build display items
   const cls = v => v>0?'buy':v<0?'sell':'neutral';
