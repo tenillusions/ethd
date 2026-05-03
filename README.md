@@ -1,5 +1,7 @@
 # ETH Dashboard
 
+[![GitHub Pages](https://img.shields.io/badge/Live-GitHub%20Pages-blue)](https://tenillusions.github.io/ethd/)
+
 Ethereum analytics dashboard with real-time market data, on-chain metrics, and weighted technical analysis.
 
 ## Features
