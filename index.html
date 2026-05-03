@@ -116,7 +116,7 @@
 <div class="header">
   <div class="header-left">
     <h1><span>ETH</span> Dashboard</h1>
-    <p>Ethereum overview — Price · Staking · Technicals · Sentiment · Signals</p>
+    <p>Price · Staking · Technicals · Sentiment</p>
   </div>
   <div class="header-right">
     <span style="display:flex;align-items:center;gap:.4rem;font-size:.72rem;color:var(--text-dim)"><span class="live-dot"></span>LIVE</span>
@@ -144,9 +144,7 @@
         <span id="rangeLow">--</span><span id="rangeHigh">--</span>
       </div>
     </div>
-    <div class="price-meta">
-      <div style="font-size:.78rem;color:var(--text-dim);line-height:1.6" id="techSummary">Loading technical data...</div>
-    </div>
+    <div class="price-meta"></div>
   </div>
 
   <!-- FEAR & GREED + KEY LEVELS (merged card) -->
@@ -203,16 +201,16 @@
     </div>
     <!-- Pressure bars -->
     <div style="display:flex;gap:1.5rem;margin-top:.5rem">
-      <div style="flex:1;display:flex;flex-direction:column;gap:.3rem">
-        <div style="display:flex;justify-content:space-between;font-size:.62rem;color:var(--text-muted)">
+      <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:.3rem">
+        <div style="display:flex;justify-content:space-between;font-size:.62rem;color:var(--text-muted);white-space:nowrap">
           <span>Entry Pressure</span><span id="entryPressureLabel">--</span>
         </div>
         <div style="height:6px;background:var(--surface-2);border-radius:3px;overflow:hidden">
           <div id="entryPressureBar" style="width:0%;height:100%;background:var(--green);border-radius:3px;transition:width .8s cubic-bezier(.16,1,.3,1)"></div>
         </div>
       </div>
-      <div style="flex:1;display:flex;flex-direction:column;gap:.3rem">
-        <div style="display:flex;justify-content:space-between;font-size:.62rem;color:var(--text-muted)">
+      <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:.3rem">
+        <div style="display:flex;justify-content:space-between;font-size:.62rem;color:var(--text-muted);white-space:nowrap">
           <span>Exit Pressure</span><span id="exitPressureLabel">--</span>
         </div>
         <div style="height:6px;background:var(--surface-2);border-radius:3px;overflow:hidden">
@@ -613,7 +611,7 @@ function computeTechIndicators() {
   const sellCount = techItems.filter(t=>t.cls==='sell').length;
   const verdict = buyCount>sellCount+2?'Strong Bullish':buyCount>sellCount?'Lean Bullish':sellCount>buyCount+2?'Strong Bearish':sellCount>buyCount?'Lean Bearish':'Neutral';
   const verdictColor = buyCount>sellCount?'var(--green)':sellCount>buyCount?'var(--red)':'var(--orange)';
-  document.getElementById('techSummary').innerHTML = `<span style="color:${verdictColor};font-weight:500">${verdict}</span> — <strong>${buyCount} Buy / ${sellCount} Sell</strong> across ${techItems.length} indicators.`;
+  document.getElementById('techSummary').innerHTML = `<span style="color:${verdictColor};font-weight:500">${verdict}</span> — ${buyCount} Buy / ${sellCount} Sell / ${techItems.length} Total`;
 }
 
 function computeKeyLevels() {
@@ -641,7 +639,7 @@ function computeKeyLevels() {
 // ── Init ──
 (async () => {
   await fetchBlockchair();
-  fetchQueue();
+  await fetchQueue();
   await fetchOnchain();
   fetchHistory();
 })();
