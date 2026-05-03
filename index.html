@@ -577,6 +577,7 @@ function computeTechIndicators() {
   const n = closes.length;
   const last = closes[n-1];
 
+  // Helper functions
   const macdCalc = arr => { const e12=ema(arr,12),e26=ema(arr,26); if(!e12||!e26)return{macd:0,signal:0,hist:0}; const ml=e12-e26; const k=2/10; const e12p=ema(arr.slice(0,-1),12),e26p=ema(arr.slice(0,-1),26); const mp=e12p&&e26p?e12p-e26p:0; const s=ml*k+mp*(1-k); return{macd:ml,signal:s,hist:ml-s}; };
   const bollinger = (arr, p=20) => { if(arr.length<p)return null; const s=sma(arr,p); const sl=arr.slice(-p); const v=sl.reduce((su,x)=>su+(x-s)**2,0)/p; return{upper:s+2*Math.sqrt(v),middle:s,lower:s-2*Math.sqrt(v)}; };
   const kdj = (h,l,c,p=9) => { if(c.length<p)return{k:50,d:50,j:50}; const hh=Math.max(...h.slice(-p)); const ll=Math.min(...l.slice(-p)); const rsv=hh===ll?50:((c[c.length-1]-ll)/(hh-ll))*100; const k=rsv; const d=(2*50+k)/3; return{k,d,j:3*k-2*d}; };
@@ -586,30 +587,76 @@ function computeTechIndicators() {
   const avgVol20=sma(vols,20),avgVol5=sma(vols,5),volRatio=avgVol5&&avgVol20?avgVol5/avgVol20:1;
   const rsiVal=rsi(closes),macdData=macdCalc(closes),ma20=sma(closes,20),ma50=sma(closes,50),ma200=sma(closes,200),bb=bollinger(closes),kdjData=kdj(highs,lows,closes),obvVal=obv(closes,vols),atrVal=atr(highs,lows,closes);
 
-  const techItems = [];
-  const sig = (v,bs,ss,inv) => { if(inv){if(v<=bs)return{cls:'buy',l:'Buy'};if(v>=ss)return{cls:'sell',l:'Sell'};return{cls:'neutral',l:'Neutral'};} if(v>=bs)return{cls:'buy',l:'Buy'};if(v<=ss)return{cls:'sell',l:'Sell'};return{cls:'neutral',l:'Neutral'}; };
+  // Previous MACD for slope detection
+  const macdPrev = macdCalc(closes.slice(0,-1));
 
-  if(rsiVal!==null) techItems.push({name:'RSI (14)',value:rsiVal.toFixed(1),...sig(rsiVal,55,45,false)});
-  techItems.push({name:'MACD',value:(macdData.hist>=0?'+':'')+macdData.hist.toFixed(2),...(macdData.hist>0?{cls:'buy',l:'Bullish'}:macdData.hist<0?{cls:'sell',l:'Bearish'}:{cls:'neutral',l:'Neutral'})});
-  if(ma20) techItems.push({name:'MA 20',value:'$'+ma20.toFixed(0),...(last>ma20?{cls:'buy',l:'Above'}:{cls:'sell',l:'Below'})});
-  if(ma50) techItems.push({name:'MA 50',value:'$'+ma50.toFixed(0),...(last>ma50?{cls:'buy',l:'Above'}:{cls:'sell',l:'Below'})});
-  if(ma200) techItems.push({name:'MA 200',value:'$'+ma200.toFixed(0),...(last>ma200?{cls:'buy',l:'Above'}:{cls:'sell',l:'Below'})});
-  if(bb){const pos=last>bb.upper?'Upper':last<bb.lower?'Lower':last>bb.middle?'Upper-Mid':'Lower-Mid'; techItems.push({name:'Bollinger',value:pos,cls:last>bb.upper?'sell':last<bb.lower?'buy':last>bb.middle?'buy':'sell',l:last>bb.upper?'Overbought':last<bb.lower?'Oversold':last>bb.middle?'Above Mid':'Below Mid'});}
-  techItems.push({name:'KDJ',value:'K:'+kdjData.k.toFixed(0)+' D:'+kdjData.d.toFixed(0),...(kdjData.k>kdjData.d?{cls:'buy',l:'Golden Cross'}:{cls:'sell',l:'Death Cross'})});
-  techItems.push({name:'OBV (20d)',value:obvVal>0?'↑ Rising':'↓ Falling',...(obvVal>0?{cls:'buy',l:'Inflow'}:{cls:'sell',l:'Outflow'})});
-  if(atrVal){const p=(atrVal/last*100); techItems.push({name:'ATR (14)',value:'$'+atrVal.toFixed(1)+' ('+p.toFixed(1)+'%)',...(p>4?{cls:'sell',l:'High Vol'}:p>2?{cls:'neutral',l:'Moderate'}:{cls:'buy',l:'Low Vol'})});}
-  techItems.push({name:'Volume',value:volRatio.toFixed(2)+'x avg',...(volRatio>1.3?{cls:'buy',l:'High'}:volRatio<0.7?{cls:'sell',l:'Low'}:{cls:'neutral',l:'Normal'})});
+  // Score helpers: each returns -2 to +2
+  const scores = {};
+
+  // RSI: 20/80 thresholds for crypto (mean reversion)
+  if(rsiVal!==null) scores.rsi = rsiVal<20?2:rsiVal<30?1:rsiVal>80?-2:rsiVal>70?-1:0;
+
+  // MACD: zero cross + slope
+  const macdH = macdData.hist, macdHp = macdPrev.hist;
+  scores.macd = (macdHp<=0&&macdH>0)?2:(macdHp>=0&&macdH<0)?-2:macdH>0?(macdH>macdHp?1:0):macdH<0?(macdH<macdHp?-1:0):0;
+
+  // MA: mean reversion — below=undervalued, above=overvalued
+  if(ma20) scores.ma20 = (last/ma20-1)<-0.03?2:(last/ma20-1)<0?1:(last/ma20-1)>0.03?-2:(last/ma20-1)>0?-1:0;
+  if(ma50) scores.ma50 = (last/ma50-1)<-0.07?2:(last/ma50-1)<-0.03?1:(last/ma50-1)>0.07?-2:(last/ma50-1)>0.03?-1:0;
+  if(ma200) scores.ma200 = (last/ma200-1)<-0.1?2:(last/ma200-1)<-0.05?1:(last/ma200-1)>0.1?-2:(last/ma200-1)>0.05?-1:0;
+
+  // Bollinger: mean reversion at bands
+  if(bb) {
+    const bw = bb.upper - bb.lower;
+    scores.bb = last<=bb.lower?2:last<bb.middle?(last<(bb.lower+bw*0.25)?1:0):last>=bb.upper?-2:last>(bb.upper-bw*0.25)?-1:0;
+  }
+
+  // KDJ: J extremes + K/D crossover
+  const {k,d,j} = kdjData;
+  scores.kdj = j<-20?2:j<0?1:j>120?-2:j>100?-1:k>d?(k<50?1:0):k<d?(k>50?-1:0):0;
+
+  // OBV: divergence with price
+  const obvPrev = obv(closes.slice(0,-5), vols.slice(0,-5));
+  const obvTrend = obvVal > obvPrev;
+  const priceTrend = last > closes[n-6];
+  scores.obv = (obvTrend&&!priceTrend)?2:(!obvTrend&&priceTrend)?-2:(obvTrend&&priceTrend)?1:(!obvTrend&&!priceTrend)?-1:0;
+
+  // Volume
+  scores.vol = volRatio>1.3?1:volRatio<0.7?-1:0;
+
+  // Category weights: Trend 40%, Momentum 30%, Bollinger 15%, Volume 15%
+  const trendScore = ((scores.ma20||0)*1 + (scores.ma50||0)*1.5 + (scores.ma200||0)*1.5) / 4;
+  const momScore = ((scores.rsi||0)*1 + (scores.macd||0)*1.2 + (scores.kdj||0)*0.8) / 3;
+  const volScore = (scores.bb||0);
+  const volFlow = ((scores.obv||0)*1 + (scores.vol||0)*1) / 2;
+  const finalScore = (trendScore*40 + momScore*30 + volScore*15 + volFlow*15) / 10;
+
+  // Build display items
+  const cls = v => v>0?'buy':v<0?'sell':'neutral';
+  const lbl = (v,pos,neg) => v>0?pos:v<0?neg:'Neutral';
+  const techItems = [];
+  if(rsiVal!==null) techItems.push({name:'RSI (14)',value:rsiVal.toFixed(1),cls:cls(scores.rsi||0),l:lbl(scores.rsi||0,'Oversold','Overbought')});
+  techItems.push({name:'MACD',value:(macdData.hist>=0?'+':'')+macdData.hist.toFixed(2),cls:cls(scores.macd),l:lbl(scores.macd,'Bull Cross','Bear Cross')});
+  if(ma20) techItems.push({name:'MA 20',value:'$'+ma20.toFixed(0),cls:cls(scores.ma20||0),l:lbl(scores.ma20||0,'Undervalued','Overvalued')});
+  if(ma50) techItems.push({name:'MA 50',value:'$'+ma50.toFixed(0),cls:cls(scores.ma50||0),l:lbl(scores.ma50||0,'Undervalued','Overvalued')});
+  if(ma200) techItems.push({name:'MA 200',value:'$'+ma200.toFixed(0),cls:cls(scores.ma200||0),l:lbl(scores.ma200||0,'Undervalued','Overvalued')});
+  if(bb){const pos=last>bb.upper?'Upper':last<bb.lower?'Lower':last>bb.middle?'Upper-Mid':'Lower-Mid'; techItems.push({name:'Bollinger',value:pos,cls:cls(scores.bb),l:lbl(scores.bb,'Oversold','Overbought')});}
+  techItems.push({name:'KDJ',value:'K:'+k.toFixed(0)+' D:'+d.toFixed(0)+' J:'+j.toFixed(0),cls:cls(scores.kdj),l:lbl(scores.kdj,'Oversold','Overbought')});
+  techItems.push({name:'OBV (20d)',value:obvTrend?'↑ Rising':'↓ Falling',cls:cls(scores.obv),l:lbl(scores.obv,'Accumulation','Distribution')});
+  if(atrVal){const p=(atrVal/last*100); techItems.push({name:'ATR (14)',value:'$'+atrVal.toFixed(1)+' ('+p.toFixed(1)+'%)',cls:'neutral',l:p>4?'High Vol':p>2?'Moderate':'Low Vol'});}
+  techItems.push({name:'Volume',value:volRatio.toFixed(2)+'x avg',cls:cls(scores.vol),l:lbl(scores.vol,'High','Low')});
 
   let techHtml = '';
   techItems.forEach(t => { techHtml += `<div class="tech-item"><span class="tech-item-name">${t.name}</span><span class="tech-item-value">${t.value}</span><span class="tech-item-signal ${t.cls}">${t.l}</span></div>`; });
   document.getElementById('techGrid').innerHTML = techHtml;
 
-  // Summary
+  // Summary: weighted score
   const buyCount = techItems.filter(t=>t.cls==='buy').length;
   const sellCount = techItems.filter(t=>t.cls==='sell').length;
-  const verdict = buyCount>sellCount+2?'Strong Bullish':buyCount>sellCount?'Lean Bullish':sellCount>buyCount+2?'Strong Bearish':sellCount>buyCount?'Lean Bearish':'Neutral';
-  const verdictColor = buyCount>sellCount?'var(--green)':sellCount>buyCount?'var(--red)':'var(--orange)';
-  document.getElementById('techSummary').innerHTML = `<span style="color:${verdictColor};font-weight:500">${verdict}</span> — ${buyCount} Buy / ${sellCount} Sell / ${techItems.length} Total`;
+  const sc = finalScore;
+  const verdict = sc>=15?'Strong Bullish':sc>=5?'Lean Bullish':sc>-5?'Neutral':sc>-15?'Lean Bearish':'Strong Bearish';
+  const verdictColor = sc>0?'var(--green)':sc<0?'var(--red)':'var(--orange)';
+  document.getElementById('techSummary').innerHTML = `<span style="color:${verdictColor};font-weight:500">${verdict}</span> — Score ${(sc>0?'+':'')+sc.toFixed(0)} · ${buyCount} Buy / ${sellCount} Sell / ${techItems.length} Total`;
 }
 
 function computeKeyLevels() {
