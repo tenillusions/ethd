@@ -618,15 +618,14 @@ function computeKeyLevels() {
   const ma20=sma(closes,20),ma50=sma(closes,50),ma200=sma(closes,200);
   const recent=closes.slice(-Math.min(60,n));
   const hi=Math.max(...recent),lo=Math.min(...recent);
-  const lows5=closes.slice(-6,-1);
-  const sup5=Math.min(...lows5);
   const levels=[
     {price:hi,label:'60d High'},
     ...(ma200&&ma200>last?[{price:ma200,label:'MA200'}]:[]),
+    {price:last*1.03,label:'Resistance'},
     {price:last,label:'Current',isCurrent:true},
+    {price:last*0.97,label:'Support'},
     {price:ma20,label:'MA20'},
     {price:ma50,label:'MA50'},
-    ...(sup5<last-5?[{price:sup5,label:'5d Low'}]:[]),
     {price:lo,label:'60d Low'},
   ].filter(l=>l.price>0).sort((a,b)=>b.price-a.price);
   let levelsHtml='';
