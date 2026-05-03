@@ -52,9 +52,9 @@
   .queue-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem}
   .queue-item{padding:.9rem;background:var(--surface-2);border:1px solid var(--border);border-radius:2px}
   .queue-item-label{font-size:.62rem;text-transform:uppercase;letter-spacing:.12em;color:var(--text-muted);margin-bottom:.4rem}
-  .queue-item-value{font-family:'DM Mono',monospace;font-size:1.4rem;font-weight:500;letter-spacing:-.02em}
+  .queue-item-value{font-family:'DM Mono',monospace;font-size:1.4rem;font-weight:500;letter-spacing:-.02em;white-space:pre-line}
   .queue-item-value.green{color:var(--green)}.queue-item-value.red{color:var(--red)}.queue-item-value.accent{color:var(--accent)}
-  .queue-item-sub{font-size:.68rem;color:var(--text-dim);margin-top:.25rem}
+  .queue-item-sub{font-size:.68rem;color:var(--text-dim);margin-top:.25rem;white-space:pre-line}
   .bar-chart{display:flex;align-items:flex-end;gap:3px;height:80px;padding-top:.5rem}
   .bar-chart .bar{flex:1;border-radius:1px 1px 0 0;min-width:4px;transition:height .6s cubic-bezier(.16,1,.3,1)}
   .bar-chart .bar.in{background:var(--green);opacity:.7}.bar-chart .bar.out{background:var(--red);opacity:.7}
@@ -62,10 +62,11 @@
   .chart-legend-item{display:flex;align-items:center;gap:.4rem;font-size:.68rem;color:var(--text-dim)}
   .chart-legend-item .swatch{width:8px;height:8px;border-radius:1px}
   .tech-grid{display:grid;grid-template-columns:1fr 1fr;gap:.5rem}
-  .tech-item{padding:.5rem .6rem;background:var(--surface-2);border:1px solid var(--border);border-radius:2px;display:flex;justify-content:space-between;align-items:center}
-  .tech-item-name{font-size:.6rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:.08em}
+  .tech-item{padding:.5rem .6rem;background:var(--surface-2);border:1px solid var(--border);border-radius:2px;display:flex;flex-direction:column;gap:.15rem}
+  .tech-item-name{font-size:.58rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.08em}
+  .tech-item-row{display:flex;align-items:center;gap:.3rem}
   .tech-item-value{font-family:'DM Mono',monospace;font-size:.82rem;font-weight:500}
-  .tech-item-signal{font-size:.52rem;text-transform:uppercase;letter-spacing:.1em;padding:.1rem .3rem;border-radius:2px;margin-left:.4rem}
+  .tech-item-signal{font-size:.5rem;text-transform:uppercase;letter-spacing:.1em;padding:.1rem .3rem;border-radius:2px}
   .tech-item-signal.buy{background:var(--green-dim);color:var(--green)}.tech-item-signal.sell{background:var(--red-dim);color:var(--red)}.tech-item-signal.neutral{background:var(--orange-dim);color:var(--orange)}
   .onchain-card{grid-column:span 2}
   .onchain-list{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.6rem}
@@ -82,7 +83,7 @@
   .status-badge.live{background:var(--green-dim);color:var(--green)}
   .status-badge.stale{background:var(--orange-dim);color:var(--orange)}
   .status-badge.offline{background:var(--red-dim);color:var(--red)}
-  .data-source{font-size:.55rem;color:var(--text-muted);margin-left:.5rem}
+  .data-source{font-size:.55rem;color:var(--text-muted);margin-left:.5rem;white-space:pre-line}
   .update-flash{animation:flash .3s ease}
   @keyframes flash{0%{background:var(--accent-dim)}100%{background:var(--surface)}}
   @media(max-width:768px){
@@ -100,9 +101,9 @@
     .fg-levels-divider{width:100%;height:1px}
     .queue-grid{grid-template-columns:1fr;gap:.8rem}
     .queue-item-value{font-size:1.3rem}
-    .tech-grid{grid-template-columns:1fr 1fr}
-    .tech-item{flex-direction:row;justify-content:space-between;align-items:center}
-    .tech-item-signal{align-self:auto;margin-left:.4rem}
+    .tech-grid{grid-template-columns:1fr 1fr;gap:.4rem}
+    .tech-item{padding:.4rem .5rem}
+    .tech-item-row{gap:.2rem}
     .onchain-list{grid-template-columns:1fr}
     .level-label{min-width:50px;font-size:.65rem}
     .bar-chart{height:60px}
@@ -144,7 +145,9 @@
         <span id="rangeLow">--</span><span id="rangeHigh">--</span>
       </div>
     </div>
-    <div class="price-meta"></div>
+    <div class="price-meta">
+      <div style="font-size:.78rem;color:var(--text-dim);line-height:1.6" id="techSummary">Loading technical data...</div>
+    </div>
   </div>
 
   <!-- FEAR & GREED + KEY LEVELS (merged card) -->
@@ -187,7 +190,6 @@
     <div style="border-top:1px solid var(--border);margin-top:1.2rem;padding-top:1.2rem">
       <div class="card-label"><span class="dot" style="background:var(--purple)"></span>Technical Indicators <span class="data-source">CryptoCompare 200d data</span></div>
       <div class="tech-grid" id="techGrid"><div class="loading">Computing...</div></div>
-      <div style="margin-top:.8rem;font-size:.72rem;color:var(--text-dim);line-height:1.5" id="techSummary"></div>
     </div>
   </div>
 
@@ -385,7 +387,7 @@ async function fetchQueue() {
     statusEl.textContent = 'LIVE';
     statusEl.className = 'status-badge live';
     const ago = parsed.updatedAt ? 'Updated ' + new Date(parsed.updatedAt).toLocaleTimeString() : '';
-    sourceEl.textContent = 'validatorqueue.com via GitHub Actions' + (ago ? ' · ' + ago : '');
+    sourceEl.textContent = 'validatorqueue.com via GitHub Actions' + (ago ? '\n' + ago : '');
     queueFailCount = 0;
   } catch(e) {
     console.error('Queue fetch error:', e);
@@ -411,12 +413,12 @@ async function fetchQueue() {
 function renderQueue() {
   if (!queueData) return;
   const d = queueData;
-  document.getElementById('queueEntry').textContent = (d.entry || '--') + ' ETH';
-  document.getElementById('queueEntrySub').textContent = d.entryWait ? 'Est. wait ≈ ' + d.entryWait + (d.entryChurn ? ' · Churn ' + d.entryChurn : '') : '--';
-  document.getElementById('queueExit').textContent = (d.exit || '--') + ' ETH';
-  document.getElementById('queueExitSub').textContent = d.exitWait ? 'Est. wait ≈ ' + d.exitWait + (d.sweep ? ' · Sweep ' + d.sweep : '') : '--';
+  document.getElementById('queueEntry').textContent = (d.entry || '--') + '\nETH';
+  document.getElementById('queueEntrySub').textContent = d.entryWait ? 'Est. wait ≈ ' + d.entryWait + (d.entryChurn ? '\nChurn ' + d.entryChurn : '') : '--';
+  document.getElementById('queueExit').textContent = (d.exit || '--') + '\nETH';
+  document.getElementById('queueExitSub').textContent = d.exitWait ? 'Est. wait ≈ ' + d.exitWait + (d.sweep ? '\nSweep ' + d.sweep : '') : '--';
   document.getElementById('validators').textContent = d.validators || '--';
-  document.getElementById('validatorsSub').textContent = d.staked ? 'Staked ' + d.staked + ' (' + d.stakedPct + ')' + (d.apr ? ' · APR ' + d.apr : '') : '--';
+  document.getElementById('validatorsSub').textContent = d.staked ? 'Staked ' + d.staked + ' (' + d.stakedPct + ')' + (d.apr ? '\nAPR ' + d.apr : '') : '--';
   const entryNum = parseInt((d.entry || '0').replace(/,/g, ''));
   const exitNum = parseInt((d.exit || '0').replace(/,/g, ''));
   const total = entryNum + exitNum;
@@ -603,7 +605,7 @@ function computeTechIndicators() {
   techItems.push({name:'Volume',value:volRatio.toFixed(2)+'x avg',...(volRatio>1.3?{cls:'buy',l:'High'}:volRatio<0.7?{cls:'sell',l:'Low'}:{cls:'neutral',l:'Normal'})});
 
   let techHtml = '';
-  techItems.forEach(t => { techHtml += `<div class="tech-item"><span class="tech-item-name">${t.name}</span><div style="display:flex;align-items:center"><span class="tech-item-value">${t.value}</span><span class="tech-item-signal ${t.cls}">${t.l}</span></div></div>`; });
+  techItems.forEach(t => { techHtml += `<div class="tech-item"><span class="tech-item-name">${t.name}</span><div class="tech-item-row"><span class="tech-item-value">${t.value}</span><span class="tech-item-signal ${t.cls}">${t.l}</span></div></div>`; });
   document.getElementById('techGrid').innerHTML = techHtml;
 
   // Summary
