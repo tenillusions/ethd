@@ -61,11 +61,11 @@
   .chart-legend{display:flex;gap:1.5rem;margin-top:.8rem}
   .chart-legend-item{display:flex;align-items:center;gap:.4rem;font-size:.68rem;color:var(--text-dim)}
   .chart-legend-item .swatch{width:8px;height:8px;border-radius:1px}
-  .tech-grid{display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1fr;gap:.5rem}
-  .tech-item{padding:.5rem .6rem;background:var(--surface-2);border:1px solid var(--border);border-radius:2px;display:flex;flex-direction:column;gap:.2rem}
+  .tech-grid{display:grid;grid-template-columns:1fr 1fr;gap:.5rem}
+  .tech-item{padding:.5rem .6rem;background:var(--surface-2);border:1px solid var(--border);border-radius:2px;display:flex;justify-content:space-between;align-items:center}
   .tech-item-name{font-size:.6rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:.08em}
   .tech-item-value{font-family:'DM Mono',monospace;font-size:.82rem;font-weight:500}
-  .tech-item-signal{font-size:.52rem;text-transform:uppercase;letter-spacing:.1em;padding:.1rem .3rem;border-radius:2px;align-self:flex-start}
+  .tech-item-signal{font-size:.52rem;text-transform:uppercase;letter-spacing:.1em;padding:.1rem .3rem;border-radius:2px;margin-left:.4rem}
   .tech-item-signal.buy{background:var(--green-dim);color:var(--green)}.tech-item-signal.sell{background:var(--red-dim);color:var(--red)}.tech-item-signal.neutral{background:var(--orange-dim);color:var(--orange)}
   .onchain-card{grid-column:span 2}
   .onchain-list{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.6rem}
@@ -185,6 +185,12 @@
         </div>
       </div>
     </div>
+    <!-- Technical Indicators -->
+    <div style="border-top:1px solid var(--border);margin-top:1.2rem;padding-top:1.2rem">
+      <div class="card-label"><span class="dot" style="background:var(--purple)"></span>Technical Indicators <span class="data-source">CryptoCompare 200d data</span></div>
+      <div class="tech-grid" id="techGrid"><div class="loading">Computing...</div></div>
+      <div style="margin-top:.8rem;font-size:.72rem;color:var(--text-dim);line-height:1.5" id="techSummary"></div>
+    </div>
   </div>
 
   <!-- STAKING -->
@@ -196,7 +202,7 @@
       <div class="queue-item"><div class="queue-item-label">Active Validators</div><div class="queue-item-value accent" id="validators">--</div><div class="queue-item-sub" id="validatorsSub">--</div></div>
     </div>
     <!-- Pressure bars -->
-    <div class="hide-desktop" style="display:flex;gap:1.5rem;margin-top:.5rem">
+    <div style="display:flex;gap:1.5rem;margin-top:.5rem">
       <div style="flex:1;display:flex;flex-direction:column;gap:.3rem">
         <div style="display:flex;justify-content:space-between;font-size:.62rem;color:var(--text-muted)">
           <span>Entry Pressure</span><span id="entryPressureLabel">--</span>
@@ -214,19 +220,13 @@
         </div>
       </div>
     </div>
-    <div class="hide-desktop" style="margin-top:.6rem;text-align:center;font-size:.65rem;color:var(--text-dim)">Entry / Exit = <span style="color:var(--green);font-family:'DM Mono',monospace" id="queueRatio">--</span></div>
-    <div class="hide-desktop" style="margin-top:.8rem"><span style="font-size:.68rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.1em">Entry/Exit Trend (30 days)</span></div>
-    <div class="bar-chart hide-desktop" id="queueChart" style="margin-top:.4rem"><div class="loading">Loading...</div></div>
-    <div class="chart-legend hide-desktop" style="margin-top:.4rem">
+    <div style="margin-top:.6rem;text-align:center;font-size:.65rem;color:var(--text-dim)">Entry / Exit = <span style="color:var(--green);font-family:'DM Mono',monospace" id="queueRatio">--</span></div>
+    <div style="margin-top:.8rem"><span style="font-size:.68rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.1em">Entry/Exit Trend (30 days)</span></div>
+    <div class="bar-chart" id="queueChart" style="margin-top:.4rem"><div class="loading">Loading...</div></div>
+    <div class="chart-legend" style="margin-top:.4rem">
       <div class="chart-legend-item"><span class="swatch" style="background:var(--green);opacity:.7"></span>Entry</div>
       <div class="chart-legend-item"><span class="swatch" style="background:var(--red);opacity:.7"></span>Exit</div>
     </div>
-  </div>
-
-  <!-- TECHNICAL INDICATORS -->
-  <div class="card">
-    <div class="card-label"><span class="dot" style="background:var(--purple)"></span>Technical Indicators <span class="data-source">CryptoCompare 200d data</span></div>
-    <div class="tech-grid" id="techGrid"><div class="loading">Computing...</div></div>
   </div>
 
   <!-- ON-CHAIN -->
